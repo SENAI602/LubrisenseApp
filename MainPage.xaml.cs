@@ -1,24 +1,55 @@
-﻿namespace Lubrisense
+﻿using Lubrisense.Services;
+using Plugin.BLE.Abstractions.Contracts;
+
+namespace Lubrisense
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
+        private readonly BluetoothService _bluetoothService;
 
         public MainPage()
         {
             InitializeComponent();
+            _bluetoothService = new BluetoothService();
+            _bluetoothService.DevicesUpdated += OnDevicesUpdated;
+            _bluetoothService.DataReceived += OnDataReceived;
         }
 
-        private void OnCounterClicked(object? sender, EventArgs e)
+        private async void OnScanClicked(object sender, EventArgs e)
         {
-            count++;
+            DevicesList.ItemsSource = null;
+            await _bluetoothService.StartFilteredScanAsync();
+        }
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+        private void OnDevicesUpdated()
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                DevicesList.ItemsSource = _bluetoothService.DiscoveredDevices;
+            });
+        }
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+        private async void OnDeviceSelected(object sender, SelectionChangedEventArgs e)
+        {
+            var device = e.CurrentSelection.FirstOrDefault() as IDevice;
+            if (device != null)
+            {
+                await _bluetoothService.ConnectToDeviceAsync(device);
+                await DisplayAlert("Conectado", device.Name, "OK");
+            }
+        }
+
+        private async void OnSendClicked(object sender, EventArgs e)
+        {
+            await _bluetoothService.SendAsync("LED_ON");
+        }
+
+        private void OnDataReceived(string data)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                DisplayAlert("Recebido", data, "OK");
+            });
         }
     }
 }
