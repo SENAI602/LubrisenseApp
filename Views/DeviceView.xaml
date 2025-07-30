@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Lubrisense.Models"
+             xmlns:viewModels="clr-namespace:Lubrisense.ViewModels"
+             xmlns:fonts="clr-namespace:Lubrisense.Resources.Fonts"
+             x:Class="Lubrisense.Views.DeviceView"
+             x:DataType="viewModels:DeviceViewModel"
+             Title="Dispositivos">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="BluetoothToolbar"
+                     Order="Primary"
+                     Priority="0"
+                     Command="{Binding ToggleScanCommand}">
+            <ToolbarItem.IconImageSource>
+                <FontImageSource
+                    FontFamily="FluentRegular"
+                    Glyph="{x:Static fonts:FluentUI.bluetooth_24_regular}"/>
+            </ToolbarItem.IconImageSource>
+        </ToolbarItem>
+        <ToolbarItem Order="Secondary" Text="Sobre"/>
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*" VerticalOptions="Fill" Padding="10">
+        <CollectionView x:Name="DevicesList" 
+                        Grid.Row="0" 
+                        SelectionMode="Single" 
+                        ItemsSource="{Binding LstDevices}" 
+                        IsGrouped="true"
+                        SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                        SelectionChangedCommand="{Binding DeviceTappedCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={x:Reference DevicesList}}">
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate x:DataType="models:DeviceGroup">
+                    <Label Text="{Binding Nome}"
+                           FontSize="16"
+                           TextColor="{StaticResource FremtecBlue}"
+                           FontAttributes="Bold"/>
+                        </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:ShowDevice">
+                    <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*,60" Padding="10">
+                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Equipamento}" TextColor="{StaticResource FremtecBlueAccent }"/>
+                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding MacAddressDisplay}" TextColor="{StaticResource FremtecGrayDark}"/>
+                        <Label Grid.RowSpan="2" 
+                               Grid.Column="1"
+                               TextColor="Red"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               HorizontalOptions="End"
+                               FontFamily="FluentRegular"
+                               FontSize="26">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label"
+                                     Binding="{Binding IsOnline}"
+                                     Value="True">
+                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_1_24_regular}" />
+                                    <Setter Property="TextColor" Value="Green" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label"
+                                     Binding="{Binding IsOnline}"
+                                     Value="False">
+                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_off_24_regular}" />
+                                    <Setter Property="TextColor" Value="Red" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.GroupFooterTemplate> 
+                <DataTemplate x:DataType="models:DeviceGroup">
+                    <Label Text="{Binding Count, StringFormat='Total de dispositivos: {0:D}'}"
+                           TextColor="{StaticResource FremtecGrayDark}"/>
+                </DataTemplate>
+            </CollectionView.GroupFooterTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

@@ -42,4 +42,20 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- Cores institucionais -->
+    <Color x:Key="FremtecBlue">#003366</Color>
+    <Color x:Key="FremtecBlueAccent">#007ACC</Color>
+    <Color x:Key="FremtecGrayLight">#D4D4D4</Color>
+    <Color x:Key="FremtecGrayDark">#555555</Color>
+    <Color x:Key="FremtecWhite">#FFFFFF</Color>
+    <Color x:Key="FremtecBlack">#000000</Color>
+
+    <!-- Brushes correspondentes -->
+    <SolidColorBrush x:Key="FremtecBlueBrush" Color="{StaticResource FremtecBlue}" />
+    <SolidColorBrush x:Key="FremtecBlueAccentBrush" Color="{StaticResource FremtecBlueAccent}" />
+    <SolidColorBrush x:Key="FremtecGrayLightBrush" Color="{StaticResource FremtecGrayLight}" />
+    <SolidColorBrush x:Key="FremtecGrayDarkBrush" Color="{StaticResource FremtecGrayDark}" />
+    <SolidColorBrush x:Key="FremtecWhiteBrush" Color="{StaticResource FremtecWhite}" />
+    <SolidColorBrush x:Key="FremtecBlackBrush" Color="{StaticResource FremtecBlack}" />
 </ResourceDictionary>
