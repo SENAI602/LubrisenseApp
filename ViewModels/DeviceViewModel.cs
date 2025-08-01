@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Lubrisense.Helpers;
 using Lubrisense.Models;
-using Lubrisense.Resources.Fonts;
 using Lubrisense.Services;
-using Lubrisense.Views;
+using Shiny;
 using Shiny.BluetoothLE;
 using System.Collections.ObjectModel;
-using System.Diagnostics.Contracts;
+using System.Text.Json;
 
 namespace Lubrisense.ViewModels
 {
@@ -19,10 +19,7 @@ namespace Lubrisense.ViewModels
         private ShowDevice _selectedDevice;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(IsNotScanning))]
         private bool _isScanning;
-
-        public bool IsNotScanning => !IsScanning;
 
         private readonly BluetoothService _bluetoothService;
 
@@ -34,6 +31,27 @@ namespace Lubrisense.ViewModels
 
             AddDevice("Dispositivos novos", new List<ShowDevice>());
             AddDevice("Dispositivos conhecidos", new List<ShowDevice>());
+        }
+
+        public void UpdateKnownDevices()
+        {
+            var grupoConhecidos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos conhecidos");
+            if (grupoConhecidos != null)
+            {
+                grupoConhecidos.Clear();
+                var listConhecidos = SavedDeviceStorage.Load();
+                if(listConhecidos == null || listConhecidos.Count == 0) return;
+
+                foreach (var device in listConhecidos)
+                {
+                    grupoConhecidos.Add(new ShowDevice
+                    {
+                        Uuid = device.Uuid,
+                        Equipamento = device.Equipamento,
+                        IsOnline = false
+                    });
+                }
+            }
         }
 
         public void AddDevice(string name, List<ShowDevice> devices)
@@ -54,6 +72,42 @@ namespace Lubrisense.ViewModels
             try
             {
                 var access = await _bluetoothService.RequestAccess();
+                switch (access)
+                {
+                    case AccessState.Disabled:
+                        // Bluetooth está desligado
+                        await Shell.Current.DisplayAlert(
+                            "Bluetooth Desligado",
+                            "Para continuar, por favor, ative o Bluetooth do seu dispositivo.",
+                            "OK"
+                        );
+                        break;
+
+                    case AccessState.Denied:
+                        // Permissão foi negada
+                        bool openSettings = await Shell.Current.DisplayAlert(
+                            "Permissão Necessária",
+                            "O acesso ao Bluetooth foi negado. Para usar esta funcionalidade, você precisa conceder a permissão nas configurações do aplicativo.",
+                            "Abrir Configurações",
+                            "Cancelar"
+                        );
+
+                        if (openSettings)
+                        {
+                            AppInfo.Current.ShowSettingsUI();
+                        }
+                        break;
+
+                    case AccessState.NotSupported:
+                        // Dispositivo não tem suporte
+                        await Shell.Current.DisplayAlert(
+                           "Não Suportado",
+                           "Infelizmente, seu dispositivo não possui suporte a Bluetooth LE.",
+                           "OK"
+                       );
+                        break;
+                }
+
                 if (access != Shiny.AccessState.Available)
                 {
                     await Shell.Current.DisplayAlert("Permissão Negada", "A permissão de Bluetooth é necessária para localizar os dispositivos Lubricense.", "OK");
@@ -129,48 +183,30 @@ namespace Lubrisense.ViewModels
                 }
                 else
                 {
-                    await Shell.Current.GoToAsync($"{nameof(DeviceDetailView)}?DeviceId={selectedDevice.Uuid}");
-                }
-                    
+                    var confirm = await Shell.Current.DisplayAlert("Conectar", $"Deseja conectar ao dispositivo {selectedDevice.MacAddressDisplay}?", "Sim", "Não");
+                    if(!confirm) return;
 
+                    _bluetoothService.StopScan();
+                    IsScanning = false;
+
+                    var device = SavedDeviceStorage.GetByUuid(selectedDevice.Uuid);
+                    if(device == null)
+                    {
+                        await Shell.Current.GoToAsync($"DeviceDetailView?DeviceUuid={selectedDevice.Uuid}");
+                        return;
+                    }
+
+                    var connected = await _bluetoothService.ConnectToDeviceAsync(selectedDevice.Uuid);
+                    if (connected)
+                    {
+                        var json = JsonSerializer.Serialize(device);
+                        await _bluetoothService.SendDataAsync(json);
+                    }
+
+
+                }
                 SelectedDevice = null;
             }
-        }
-
-        //private void UpdateStatusDevice(IEnumerable<string> idsDispositivosOnline)
-        //{
-        //    var grupoConhecidos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos conhecidos");
-        //    var grupoNovos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos novos");
-
-        //    if (grupoConhecidos == null || grupoNovos == null)
-        //    {
-        //        return;
-        //    }
-        //    // Limpa o grupo de novos dispositivos
-        //    grupoNovos.Clear();
-
-        //    // Marca todos os dispositivos conhecidos como offline inicialmente
-        //    foreach (var device in grupoConhecidos)
-        //    {
-        //        device.IsOnline = false;
-        //    }
-
-        //    foreach (var idOnline in idsDispositivosOnline)
-        //    {
-        //        var dispositivoConhecido = grupoConhecidos.FirstOrDefault(d => string.Equals(d.Id, idOnline, StringComparison.OrdinalIgnoreCase));
-        //        if (dispositivoConhecido != null) dispositivoConhecido.IsOnline = true;
-        //        else
-        //        {
-        //            grupoNovos.Add(new ShowDevice
-        //            {
-        //                Id = idOnline,
-        //                Equipamento = "Novo Dispositivo",
-        //                IsOnline = true
-        //            });
-        //        }
-        //    }
-        //}
-
-        
+        }       
     }
 }

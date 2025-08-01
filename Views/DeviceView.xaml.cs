@@ -19,6 +19,9 @@ public partial class DeviceView : ContentPage
     {
         base.OnAppearing();
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        viewModel.UpdateKnownDevices();
+
         UpdateToolbarIcon();
     }
 

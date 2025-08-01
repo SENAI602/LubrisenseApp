@@ -32,7 +32,6 @@ namespace Lubrisense.Models
                 var bytes = deviceGuid.ToByteArray();
                 var macBytes = new byte[6];
                 Array.Copy(bytes, 10, macBytes, 0, 6);
-                Array.Reverse(macBytes);
                 return BitConverter.ToString(macBytes).Replace('-', ':');
             }
         }

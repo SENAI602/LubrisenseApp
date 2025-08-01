@@ -20,6 +20,12 @@ namespace Lubrisense.Helpers
                 : JsonSerializer.Deserialize<List<SavedDevice>>(json) ?? new List<SavedDevice>();
         }
 
+        public static SavedDevice? GetByUuid(string uuid)
+        {
+            var list = Load();
+            return list.FirstOrDefault(d => d.Uuid.Equals(uuid, StringComparison.OrdinalIgnoreCase));
+        }
+
         public static void Save(List<SavedDevice> devices)
         {
             var json = JsonSerializer.Serialize(devices);

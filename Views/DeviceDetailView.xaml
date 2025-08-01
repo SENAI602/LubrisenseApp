@@ -1,12 +1,44 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Lubrisense.ViewModels"
+             xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
              x:Class="Lubrisense.Views.DeviceDetailView"
-             Title="DeviceDetailView">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             Title="Detalhes do Dispositivo"
+             x:DataType="viewModels:DeviceDetailViewModel">
+    <ScrollView>
+        <VerticalStackLayout Margin="10" Spacing="20">
+                        
+            <inputLayout:SfTextInputLayout Hint="TAG"
+                                           ContainerType="Outlined"
+                                           HelperText="TAG do equipamento">
+                <Entry Text="{Binding TextoTag, Mode=TwoWay}"/>
+            </inputLayout:SfTextInputLayout>
+            
+            <inputLayout:SfTextInputLayout Hint="Equipamento"
+                                           ContainerType="Outlined"
+                                           HasError="{Binding ErroEquipamento}"
+                                           ErrorText="Digite o nome do equipamento"
+                                           HelperText="Nome do equipamento">
+                <Entry Text="{Binding TextoEquipamento, Mode=TwoWay}"/>
+            </inputLayout:SfTextInputLayout>
+
+            <inputLayout:SfTextInputLayout Hint="Setor"
+                                           ContainerType="Outlined"
+                                           HasError="{Binding ErroSetor}"
+                                           ErrorText="Insira o setor do equipamento"
+                                           HelperText="Setor do equipamento">
+                <Entry Text="{Binding TextoSetor, Mode=TwoWay}"/>
+            </inputLayout:SfTextInputLayout>
+
+            <inputLayout:SfTextInputLayout Hint="Lubrificante"
+                                           ContainerType="Outlined"
+                                           HelperText="Lubrificante utilizado">
+                <Entry Text="{Binding TextoLubrificante, Mode=TwoWay}"/>
+            </inputLayout:SfTextInputLayout>
+
+            <Button Text="Salvar"
+                    Command="{Binding SalvarCommand}"/>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

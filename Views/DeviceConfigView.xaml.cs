@@ -3,8 +3,7 @@ using Lubrisense.ViewModels;
 namespace Lubrisense.Views;
 
 [QueryProperty(nameof(DeviceUuid), "DeviceUuid")]
-
-public partial class DeviceDetailView : ContentPage
+public partial class DeviceConfigView : ContentPage
 {
     public string DeviceUuid
     {
@@ -12,15 +11,15 @@ public partial class DeviceDetailView : ContentPage
         set
         {
             _deviceUuid = value;
-            if (BindingContext is DeviceDetailViewModel vm)
-                vm.DeviceUuid = value;
+            if (BindingContext is DeviceConfigViewModel vm)
+                vm.SetupDevice(value);
         }
     }
     private string _deviceUuid;
 
-    public DeviceDetailView(DeviceDetailViewModel viewModel)
+    public DeviceConfigView(DeviceConfigViewModel viewModel)
 	{
 		InitializeComponent();
-		BindingContext = viewModel;
+        BindingContext = viewModel;
     }
 }

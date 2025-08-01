@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Lubrisense.ViewModels"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+             x:Class="Lubrisense.Views.DeviceConfigView"
+             Title="Configuração"
+             x:DataType="viewModels:DeviceConfigViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Modo Básico"
+                 Command="{Binding ChangeBasicClickedCommand}"
+                 Order="Secondary" />
+        <ToolbarItem Text="Modo Avançado"
+                 Command="{Binding ChangeAdvanceClickedCommand}"
+                 Order="Secondary" />
+    </ContentPage.ToolbarItems>
+    <ScrollView>
+        <VerticalStackLayout Margin="10" Spacing="20">
+            <Grid>
+                <VerticalStackLayout x:Name="LayoutBasico"
+                                     IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}">
+                    <inputLayout:SfTextInputLayout Hint="Volume"
+                                                   ContainerType="Outlined"
+                                                   ErrorText="Insira o volume do lubrificante"
+                                                   HelperText="Quantidade em gramas"
+                                                   HasError="{Binding ErroVolumeBasico}">
+                        <Entry Text="{Binding VolumeBasico, Mode=TwoWay}"
+                               Keyboard="Numeric"/>
+                    </inputLayout:SfTextInputLayout>
+
+                    <inputLayout:SfTextInputLayout Hint="Intervalo"
+                                                   ContainerType="Outlined"
+                                                   ErrorText="Necessário inserir o intervalo"
+                                                   HelperText="Em meses"
+                                                   HasError="{Binding ErroIntervaloBasico}">
+                        <Picker SelectedItem="{Binding IntervaloBasico}">
+                            <Picker.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>1</x:String>
+                                    <x:String>2</x:String>
+                                    <x:String>3</x:String>
+                                    <x:String>4</x:String>
+                                    <x:String>5</x:String>
+                                    <x:String>6</x:String>
+                                    <x:String>7</x:String>
+                                    <x:String>8</x:String>
+                                    <x:String>9</x:String>
+                                    <x:String>10</x:String>
+                                    <x:String>11</x:String>
+                                    <x:String>12</x:String>
+                                </x:Array>
+                            </Picker.ItemsSource>
+                        </Picker>
+                    </inputLayout:SfTextInputLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout x:Name="LayoutAvancado"
+                                     IsVisible="{Binding ConfigIsAdvanced}">
+                    <inputLayout:SfTextInputLayout Hint="Volume"
+                                                   ContainerType="Outlined"
+                                                   ErrorText="Insira o volume do lubrificante"
+                                                   HelperText="Quantidade em gramas"
+                                                   HasError="{Binding ErroVolumeAvancado}">
+                        <Entry Text="{Binding VolumeAvancado, Mode=TwoWay}"
+                   Keyboard="Numeric"/>
+                    </inputLayout:SfTextInputLayout>
+
+                    <inputLayout:SfTextInputLayout Hint="Intervalo"
+                                                   ContainerType="Outlined"
+                                                   ErrorText="Insira o intervalo de lubrificação"
+                                                   HelperText="Intervalo para lubrificação"
+                                                   HasError="{Binding ErroIntervaloAvancado}">
+                        <Entry Text="{Binding IntervaloAvancado, Mode=TwoWay}"
+                               Keyboard="Numeric"/>
+                    </inputLayout:SfTextInputLayout>
+
+                    <inputLayout:SfTextInputLayout Hint="Tipo de intervalo"
+                                                   ContainerType="Outlined"
+                                                   ErrorText="Necessário inserir o tipo de intervalo"
+                                                   HelperText="Hora, dia ou mês"
+                                                   HasError="{Binding ErroTipoIntervalo}">
+                        <Picker SelectedItem="{Binding TipoIntervalo}">
+                            <Picker.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>Nenhum</x:String>
+                                    <x:String>Hora</x:String>
+                                    <x:String>Dia</x:String>
+                                    <x:String>Mês</x:String>
+                                </x:Array>
+                            </Picker.ItemsSource>
+                        </Picker>
+                    </inputLayout:SfTextInputLayout>
+                    
+                </VerticalStackLayout>
+            </Grid>
+
+            <Button Text="Salvar"
+                    Command="{Binding SalvarCommand}"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -2,8 +2,9 @@
 using Lubrisense.Services;
 using Lubrisense.ViewModels;
 using Lubrisense.Views;
-using Shiny;
 using Microsoft.Extensions.Logging;
+using Shiny;
+using Syncfusion.Maui.Toolkit.Hosting;
 
 namespace Lubrisense
 {
@@ -13,6 +14,7 @@ namespace Lubrisense
         {
             var builder = MauiApp.CreateBuilder();
             builder
+                .ConfigureSyncfusionToolkit()
                 .UseMauiApp<App>()
                 .UseShiny()
                 .UseMauiCommunityToolkit()
@@ -30,9 +32,11 @@ namespace Lubrisense
 
             builder.Services.AddSingleton<DeviceViewModel>();
             builder.Services.AddTransient<DeviceDetailViewModel>();
+            builder.Services.AddTransient<DeviceConfigViewModel>();
 
             builder.Services.AddSingleton<DeviceView>();
             builder.Services.AddTransient<DeviceDetailView>();
+            builder.Services.AddTransient<DeviceConfigView>();
 
 #if DEBUG
             builder.Logging.AddDebug();
