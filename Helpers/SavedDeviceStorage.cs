@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Lubrisense.Helpers
 {
@@ -12,6 +10,7 @@ namespace Lubrisense.Helpers
     {
         private const string StorageKey = "DispositivosSalvos";
 
+        // Carrega a lista (Mantido igual ao original)
         public static List<SavedDevice> Load()
         {
             var json = Preferences.Get(StorageKey, "");
@@ -20,11 +19,15 @@ namespace Lubrisense.Helpers
                 : JsonSerializer.Deserialize<List<SavedDevice>>(json) ?? new List<SavedDevice>();
         }
 
-        public static SavedDevice? GetByUuid(string uuid)
+        // --- CORREÇÃO 1: Adicionado o método GetById que o ViewModel pede ---
+        public static SavedDevice? GetById(string uuid)
         {
             var list = Load();
             return list.FirstOrDefault(d => d.Uuid.Equals(uuid, StringComparison.OrdinalIgnoreCase));
         }
+
+        // (Mantido para compatibilidade com outras partes do código, se houver)
+        public static SavedDevice? GetByUuid(string uuid) => GetById(uuid);
 
         public static void Save(List<SavedDevice> devices)
         {
@@ -32,6 +35,7 @@ namespace Lubrisense.Helpers
             Preferences.Set(StorageKey, json);
         }
 
+        // --- CORREÇÃO 2: Atualiza TODOS os campos ao editar ---
         public static void AddOrUpdate(SavedDevice device)
         {
             var list = Load();
@@ -39,21 +43,28 @@ namespace Lubrisense.Helpers
 
             if (existing != null)
             {
+                // Atualiza todos os campos editáveis
+                existing.Tag = device.Tag;
                 existing.Equipamento = device.Equipamento;
-                existing.UltimaConexao = device.UltimaConexao;
+                existing.Setor = device.Setor;
+                existing.Lubrificante = device.Lubrificante;
+                existing.UltimaConexao = DateTime.Now; // Atualiza horário
             }
             else
             {
+                device.UltimaConexao = DateTime.Now;
                 list.Add(device);
             }
 
             Save(list);
         }
 
-        public static void Remove(string Uuid)
+        // Remove da lista
+        public static void Remove(string uuid)
         {
             var list = Load();
-            list.RemoveAll(d => d.Uuid.Equals(Uuid, StringComparison.OrdinalIgnoreCase));
+            // Remove qualquer item que tenha esse ID
+            list.RemoveAll(d => d.Uuid.Equals(uuid, StringComparison.OrdinalIgnoreCase));
             Save(list);
         }
 

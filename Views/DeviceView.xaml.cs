@@ -5,22 +5,22 @@ namespace Lubrisense.Views;
 
 public partial class DeviceView : ContentPage
 {
-    private bool isScanning = false;
     private readonly DeviceViewModel viewModel;
+
     public DeviceView(DeviceViewModel _viewModel)
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
         viewModel = _viewModel;
         BindingContext = viewModel;
-
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        viewModel.UpdateKnownDevices();
+        // Garante que os eventos e a lista sejam atualizados
+        viewModel.OnAppearing();
+        viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         UpdateToolbarIcon();
     }

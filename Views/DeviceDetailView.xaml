@@ -6,39 +6,83 @@
              x:Class="Lubrisense.Views.DeviceDetailView"
              Title="Detalhes do Dispositivo"
              x:DataType="viewModels:DeviceDetailViewModel">
+
     <ScrollView>
-        <VerticalStackLayout Margin="10" Spacing="20">
-                        
-            <inputLayout:SfTextInputLayout Hint="TAG"
-                                           ContainerType="Outlined"
-                                           HelperText="TAG do equipamento">
+        <VerticalStackLayout Margin="10" Spacing="15" Padding="10,10,10,60">
+
+            <Frame BackgroundColor="{Binding CorStatus}" Padding="10" CornerRadius="5" HasShadow="False">
+                <Label Text="{Binding StatusConexao}" 
+                       TextColor="White" 
+                       FontAttributes="Bold" 
+                       HorizontalOptions="Center"/>
+            </Frame>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}"
+                               HeightRequest="30"/>
+
+            <inputLayout:SfTextInputLayout Hint="TAG" ContainerType="Outlined" HelperText="TAG do equipamento">
                 <Entry Text="{Binding TextoTag, Mode=TwoWay}"/>
             </inputLayout:SfTextInputLayout>
-            
-            <inputLayout:SfTextInputLayout Hint="Equipamento"
-                                           ContainerType="Outlined"
-                                           HasError="{Binding ErroEquipamento}"
-                                           ErrorText="Digite o nome do equipamento"
+
+            <inputLayout:SfTextInputLayout Hint="Equipamento" ContainerType="Outlined" 
+                                           HasError="{Binding ErroEquipamento}" 
+                                           ErrorText="Obrigatório" 
                                            HelperText="Nome do equipamento">
                 <Entry Text="{Binding TextoEquipamento, Mode=TwoWay}"/>
             </inputLayout:SfTextInputLayout>
 
-            <inputLayout:SfTextInputLayout Hint="Setor"
-                                           ContainerType="Outlined"
-                                           HasError="{Binding ErroSetor}"
-                                           ErrorText="Insira o setor do equipamento"
-                                           HelperText="Setor do equipamento">
+            <inputLayout:SfTextInputLayout Hint="Setor" ContainerType="Outlined" 
+                                           HasError="{Binding ErroSetor}" 
+                                           ErrorText="Obrigatório" 
+                                           HelperText="Setor">
                 <Entry Text="{Binding TextoSetor, Mode=TwoWay}"/>
             </inputLayout:SfTextInputLayout>
 
-            <inputLayout:SfTextInputLayout Hint="Lubrificante"
-                                           ContainerType="Outlined"
-                                           HelperText="Lubrificante utilizado">
+            <inputLayout:SfTextInputLayout Hint="Lubrificante" ContainerType="Outlined" HelperText="Lubrificante">
                 <Entry Text="{Binding TextoLubrificante, Mode=TwoWay}"/>
             </inputLayout:SfTextInputLayout>
 
-            <Button Text="Salvar"
-                    Command="{Binding SalvarCommand}"/>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="Salvar Dados" 
+                        Command="{Binding SalvarCommand}" 
+                        BackgroundColor="{StaticResource Primary}" 
+                        TextColor="White"/>
+
+                <Button Grid.Column="1" Text="Excluir" 
+                        Command="{Binding ExcluirCommand}" 
+                        BackgroundColor="#D32F2F" 
+                        TextColor="White"/>
+            </Grid>
+
+            <BoxView HeightRequest="1" Color="Gray" Margin="0,20"/>
+
+            <Label Text="Controle Manual (Bluetooth)" 
+                   FontSize="18" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center"
+                   TextColor="{StaticResource Primary}"/>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="60">
+                <Button Grid.Column="0" 
+                        Text="Ligar LED" 
+                        BackgroundColor="Green"
+                        TextColor="White"
+                        FontSize="16"
+                        Command="{Binding LigarLedCommand}"/>
+
+                <Button Grid.Column="1" 
+                        Text="Desligar LED" 
+                        BackgroundColor="#B71C1C"
+                        TextColor="White"
+                        FontSize="16"
+                        Command="{Binding DesligarLedCommand}"/>
+            </Grid>
+
+            <Label Text="* O teste só funciona se estiver conectado." 
+                   FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
