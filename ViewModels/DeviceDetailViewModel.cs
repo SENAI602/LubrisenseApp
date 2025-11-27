@@ -5,6 +5,7 @@ using Lubrisense.Models;
 using Lubrisense.Services;
 using Microsoft.Maui.Graphics;
 using System.Threading.Tasks;
+using Microsoft.Maui.Controls; // Necessário para Shell e Alerts
 
 namespace Lubrisense.ViewModels
 {
@@ -26,7 +27,7 @@ namespace Lubrisense.ViewModels
         // Controle de Carregamento e Status
         [ObservableProperty] private bool isBusy;
         [ObservableProperty] private string statusConexao = "Desconectado";
-        [ObservableProperty] private Color corStatus = Colors.Gray;
+        [ObservableProperty] private Color corStatus = Colors.Red; // Vermelho padrão
 
         // ID do Dispositivo
         private string _deviceUuid;
@@ -39,7 +40,8 @@ namespace Lubrisense.ViewModels
                 if (!string.IsNullOrEmpty(value))
                 {
                     CarregarDadosSalvos();
-                    _ = ConectarAutomaticamente(); // Tenta conectar ao abrir
+                    // Tenta conectar assim que entra na tela
+                    _ = ConectarAutomaticamente();
                 }
             }
         }
@@ -47,6 +49,17 @@ namespace Lubrisense.ViewModels
         public DeviceDetailViewModel(BluetoothService bluetoothService)
         {
             _bluetoothService = bluetoothService;
+
+            // Ouve evento de queda de conexão do Serviço (Se implementado no Service)
+            // Se o Service não tiver esse evento ainda, esta linha pode ser removida ou comentada
+            // _bluetoothService.DeviceDisconnected += OnDeviceDisconnected; 
+        }
+
+        // Método para atualizar a UI quando cai a conexão (Opcional)
+        private void OnDeviceDisconnected()
+        {
+            StatusConexao = "Conexão Perdida";
+            CorStatus = Colors.Red;
         }
 
         // 1. CARREGA DADOS
@@ -62,7 +75,7 @@ namespace Lubrisense.ViewModels
             }
         }
 
-        // 2. RECONEXÃO AUTOMÁTICA (Estabilidade)
+        // 2. RECONEXÃO AUTOMÁTICA
         private async Task ConectarAutomaticamente()
         {
             if (IsBusy) return;
@@ -71,7 +84,8 @@ namespace Lubrisense.ViewModels
             CorStatus = Colors.Orange;
             IsBusy = true;
 
-            await Task.Delay(500); // Estabilidade visual
+            // Pequeno delay visual
+            await Task.Delay(500);
 
             bool sucesso = await _bluetoothService.ConnectToDeviceAsync(DeviceUuid);
 
@@ -89,11 +103,11 @@ namespace Lubrisense.ViewModels
             }
         }
 
-        // 3. SALVAR E NAVEGAR (Lógica Restaurada!)
+        // 3. SALVAR E NAVEGAR
         [RelayCommand]
         private async Task Salvar()
         {
-            // Validação
+            // Validação Básica
             bool temErro = false;
             if (string.IsNullOrWhiteSpace(TextoEquipamento)) { ErroEquipamento = true; temErro = true; } else ErroEquipamento = false;
             if (string.IsNullOrWhiteSpace(TextoSetor)) { ErroSetor = true; temErro = true; } else ErroSetor = false;
@@ -111,18 +125,17 @@ namespace Lubrisense.ViewModels
             // Salva no banco local
             SavedDeviceStorage.AddOrUpdate(deviceAtualizado);
 
-            // --- AQUI ESTÁ A MÁGICA DE VOLTA ---
-            // Pergunta se quer ir para a tela de Configuração (Básico/Avançado)
+            // Pergunta se quer configurar a dosagem
             var confirm = await Shell.Current.DisplayAlert("Salvo", "Deseja configurar os parâmetros (Dose/Intervalo) agora?", "Sim", "Não");
 
             if (confirm)
             {
-                // Navega para a tela de Configuração levando o ID
+                // Navega para a tela de Configuração
                 await Shell.Current.GoToAsync($"../DeviceConfigView?DeviceUuid={DeviceUuid}");
             }
             else
             {
-                // Se não quiser configurar, volta para a lista
+                // Volta para a lista
                 await Shell.Current.GoToAsync("..");
             }
         }
@@ -144,16 +157,27 @@ namespace Lubrisense.ViewModels
         public async Task LigarLed()
         {
             IsBusy = true;
-            if (StatusConexao != "Conectado") await ConectarAutomaticamente();
+
+            // Se não estiver conectado, tenta reconectar antes
+            if (StatusConexao != "Conectado")
+            {
+                await ConectarAutomaticamente();
+            }
 
             if (StatusConexao == "Conectado")
             {
-                await _bluetoothService.SendDataAsync("1");
+                bool enviou = await _bluetoothService.SendDataAsync("1");
+                if (!enviou)
+                {
+                    StatusConexao = "Erro ao Enviar";
+                    CorStatus = Colors.Red;
+                }
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Erro", "Não foi possível conectar.", "OK");
+                await App.Current.MainPage.DisplayAlert("Erro", "Não foi possível conectar ao dispositivo.", "OK");
             }
+
             IsBusy = false;
         }
 
@@ -161,12 +185,22 @@ namespace Lubrisense.ViewModels
         public async Task DesligarLed()
         {
             IsBusy = true;
-            if (StatusConexao != "Conectado") await ConectarAutomaticamente();
+
+            if (StatusConexao != "Conectado")
+            {
+                await ConectarAutomaticamente();
+            }
 
             if (StatusConexao == "Conectado")
             {
-                await _bluetoothService.SendDataAsync("0");
+                bool enviou = await _bluetoothService.SendDataAsync("0");
+                if (!enviou)
+                {
+                    StatusConexao = "Erro ao Enviar";
+                    CorStatus = Colors.Red;
+                }
             }
+
             IsBusy = false;
         }
     }

@@ -63,74 +63,72 @@ namespace Lubrisense.Services
 
         public void StopScan() => _scanSubscription?.Dispose();
 
-        // --- CONEXÃO INTELIGENTE ---
+        // --- CONEXÃO ---
         public async Task<bool> ConnectToDeviceAsync(string deviceUuid)
         {
-            StopScan();
-
-            // 1. VERIFICAÇÃO INTELIGENTE (A CORREÇÃO)
-            // Se já estamos conectados no dispositivo certo e a característica está pronta, NÃO DESCONECTA!
+            // 1. Reutilização
             if (_connectedDevice != null &&
                 _connectedDevice.Status == ConnectionState.Connected &&
                 _connectedDevice.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase) &&
                 _writeReadNotifyCharacteristic != null)
             {
-                Console.WriteLine("[BluetoothService] Já conectado e pronto. Reutilizando conexão.");
                 return true;
             }
 
-            // Se chegou aqui, é porque não estava conectado ou era outro dispositivo.
-            // Agora sim, inicia o processo de conexão do zero.
+            StopScan();
 
-            // Tenta até 3 vezes
             for (int tentativa = 1; tentativa <= 3; tentativa++)
             {
                 try
                 {
                     Console.WriteLine($"[BLE] Tentativa {tentativa}...");
 
-                    // Limpeza de conexão anterior (se houver)
+                    // 2. Limpeza
                     if (_connectedDevice != null)
                     {
-                        try { _connectedDevice.CancelConnection(); } catch { }
+                        try
+                        {
+                            _notificationSubscription?.Dispose();
+                            _connectedDevice.CancelConnection();
+                        }
+                        catch { }
                         _connectedDevice = null;
                         _writeReadNotifyCharacteristic = null;
-                        await Task.Delay(300);
+                        await Task.Delay(500);
                     }
 
-                    // Busca dispositivo
+                    // 3. Busca
                     var deviceToConnect = DiscoveredDevices.FirstOrDefault(p => p.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase));
 
-                    // Scan de emergência se não estiver na lista
                     if (deviceToConnect == null)
                     {
                         var scanResult = await _bleManager.Scan()
                             .Where(x => x.Peripheral.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase))
                             .Take(1)
-                            .Timeout(TimeSpan.FromSeconds(4))
+                            .Timeout(TimeSpan.FromSeconds(5))
                             .ToTask();
                         deviceToConnect = scanResult?.Peripheral;
                     }
 
                     if (deviceToConnect == null) throw new Exception("Dispositivo não encontrado.");
 
-                    // Conecta
+                    // 4. Conecta
                     await deviceToConnect.ConnectAsync(new ConnectionConfig { AutoConnect = false });
                     _connectedDevice = deviceToConnect;
 
-                    // Busca Característica
-                    // Retry interno para buscar serviços (Android às vezes demora para descobrir)
+                    // 5. Busca Característica
                     for (int i = 0; i < 3; i++)
                     {
                         try
                         {
+                            if (i > 0) await Task.Delay(300);
                             _writeReadNotifyCharacteristic = await deviceToConnect.GetCharacteristic(
                                 App.Instance.LubricenseServiceUuid,
                                 App.Instance.LubricenseCharacteristicUuid
                             ).Take(1).ToTask();
                             if (_writeReadNotifyCharacteristic != null) break;
                         }
-                        catch { await Task.Delay(500); }
+                        catch { }
                     }
 
                     if (_writeReadNotifyCharacteristic == null) throw new Exception("Característica não encontrada.");
@@ -147,21 +145,41 @@ namespace Lubrisense.Services
             return false;
         }
 
+        // --- CORREÇÃO CRÍTICA: FATIAMENTO DE DADOS (CHUNKING) ---
         public async Task<bool> SendDataAsync(string message)
         {
             if (_connectedDevice?.Status != ConnectionState.Connected || _writeReadNotifyCharacteristic == null) return false;
 
             try
             {
-                // Pequeno delay para garantir que o buffer do BLE não está cheio
-                await Task.Delay(50);
+                // Converte a string inteira em bytes
                 var bytes = Encoding.UTF8.GetBytes(message);
-                await _connectedDevice.WriteCharacteristicAsync(_writeReadNotifyCharacteristic, bytes); // WithResponse = true por padrão no Shiny
+
+                // Define o tamanho seguro do pacote (20 bytes é o padrão universal do BLE)
+                int chunkSize = 20;
+                int offset = 0;
+
+                // Loop para enviar pedacinho por pedacinho
+                while (offset < bytes.Length)
+                {
+                    int size = Math.Min(chunkSize, bytes.Length - offset);
+                    var chunk = new byte[size];
+                    Array.Copy(bytes, offset, chunk, 0, size);
+
+                    // Envia o pedaço (Sem resposta para ser rápido)
+                    await _connectedDevice.WriteCharacteristicAsync(_writeReadNotifyCharacteristic, chunk, false);
+
+                    // Pequeno delay para não engasgar o rádio do celular
+                    await Task.Delay(20);
+
+                    offset += size;
+                }
+
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[BluetoothService] Erro envio: {ex.Message}");
+                Console.WriteLine($"[BLE] Erro envio: {ex.Message}");
                 return false;
             }
         }
@@ -169,7 +187,6 @@ namespace Lubrisense.Services
         private void SetupNotifications()
         {
             if (_connectedDevice == null || _writeReadNotifyCharacteristic == null) return;
-
             try
             {
                 _notificationSubscription?.Dispose();
@@ -177,8 +194,7 @@ namespace Lubrisense.Services
                 {
                     _notificationSubscription = _connectedDevice
                         .NotifyCharacteristic(_writeReadNotifyCharacteristic)
-                        .Subscribe(result =>
-                        {
+                        .Subscribe(result => {
                             if (result.Data != null)
                             {
                                 var data = Encoding.UTF8.GetString(result.Data);
