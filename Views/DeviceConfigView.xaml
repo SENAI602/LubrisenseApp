@@ -7,37 +7,60 @@
              x:Class="Lubrisense.Views.DeviceConfigView"
              Title="Configuração"
              x:DataType="viewModels:DeviceConfigViewModel">
+
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
+
+    <!-- Botões da Barra Superior -->
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Modo Básico"
-                 Command="{Binding ChangeBasicClickedCommand}"
-                 Order="Secondary" />
+                     Command="{Binding ChangeBasicClickedCommand}"
+                     Order="Secondary" />
         <ToolbarItem Text="Modo Avançado"
-                 Command="{Binding ChangeAdvanceClickedCommand}"
-                 Order="Secondary" />
+                     Command="{Binding ChangeAdvanceClickedCommand}"
+                     Order="Secondary" />
     </ContentPage.ToolbarItems>
+
     <ScrollView>
-        <VerticalStackLayout Margin="10" Spacing="20">
+        <VerticalStackLayout Margin="20" Spacing="20">
+
+            <!-- Título do Modo (CORRIGIDO: Sem BoolToObjectConverter que quebrava) -->
+            <VerticalStackLayout HorizontalOptions="Center">
+                <Label Text="Modo Avançado" 
+                       FontSize="18" 
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource Primary}"
+                       IsVisible="{Binding ConfigIsAdvanced}"/>
+
+                <Label Text="Modo Básico" 
+                       FontSize="18" 
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource Primary}"
+                       IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}"/>
+            </VerticalStackLayout>
+
             <Grid>
+                <!-- ================= MODO BÁSICO ================= -->
                 <VerticalStackLayout x:Name="LayoutBasico"
-                                     IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}">
-                    <inputLayout:SfTextInputLayout Hint="Volume"
+                                     IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}"
+                                     Spacing="15">
+
+                    <inputLayout:SfTextInputLayout Hint="Volume (g)"
                                                    ContainerType="Outlined"
                                                    ErrorText="Insira o volume do lubrificante"
-                                                   HelperText="Quantidade em gramas"
+                                                   HelperText="Quantidade total em gramas"
                                                    HasError="{Binding ErroVolumeBasico}">
                         <Entry Text="{Binding VolumeBasico, Mode=TwoWay}"
                                Keyboard="Numeric"/>
                     </inputLayout:SfTextInputLayout>
 
-                    <inputLayout:SfTextInputLayout Hint="Intervalo"
+                    <inputLayout:SfTextInputLayout Hint="Intervalo (Meses)"
                                                    ContainerType="Outlined"
-                                                   ErrorText="Necessário inserir o intervalo"
-                                                   HelperText="Em meses"
+                                                   ErrorText="Selecione o intervalo"
+                                                   HelperText="Duração em meses"
                                                    HasError="{Binding ErroIntervaloBasico}">
                         <Picker SelectedItem="{Binding IntervaloBasico}">
                             <Picker.ItemsSource>
@@ -60,48 +83,74 @@
                     </inputLayout:SfTextInputLayout>
                 </VerticalStackLayout>
 
+                <!-- ================= MODO AVANÇADO ================= -->
                 <VerticalStackLayout x:Name="LayoutAvancado"
-                                     IsVisible="{Binding ConfigIsAdvanced}">
-                    <inputLayout:SfTextInputLayout Hint="Volume"
+                                     IsVisible="{Binding ConfigIsAdvanced}"
+                                     Spacing="15">
+
+                    <!-- Volume -->
+                    <inputLayout:SfTextInputLayout Hint="Volume (g)"
                                                    ContainerType="Outlined"
-                                                   ErrorText="Insira o volume do lubrificante"
-                                                   HelperText="Quantidade em gramas"
+                                                   ErrorText="Insira o volume"
+                                                   HelperText="Quantidade por dose"
                                                    HasError="{Binding ErroVolumeAvancado}">
                         <Entry Text="{Binding VolumeAvancado, Mode=TwoWay}"
-                   Keyboard="Numeric"/>
-                    </inputLayout:SfTextInputLayout>
-
-                    <inputLayout:SfTextInputLayout Hint="Intervalo"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Insira o intervalo de lubrificação"
-                                                   HelperText="Intervalo para lubrificação"
-                                                   HasError="{Binding ErroIntervaloAvancado}">
-                        <Entry Text="{Binding IntervaloAvancado, Mode=TwoWay}"
                                Keyboard="Numeric"/>
                     </inputLayout:SfTextInputLayout>
 
-                    <inputLayout:SfTextInputLayout Hint="Tipo de intervalo"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Necessário inserir o tipo de intervalo"
-                                                   HelperText="Hora, dia ou mês"
-                                                   HasError="{Binding ErroTipoIntervalo}">
-                        <Picker SelectedItem="{Binding TipoIntervalo}">
-                            <Picker.ItemsSource>
-                                <x:Array Type="{x:Type x:String}">
-                                    <x:String>Nenhum</x:String>
-                                    <x:String>Hora</x:String>
-                                    <x:String>Dia</x:String>
-                                    <x:String>Mês</x:String>
-                                </x:Array>
-                            </Picker.ItemsSource>
-                        </Picker>
-                    </inputLayout:SfTextInputLayout>
-                    
+                    <!-- Intervalo -->
+                    <Label Text="Intervalo de Aplicação" FontSize="14" FontAttributes="Bold" TextColor="Gray" Margin="0,10,0,0"/>
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                        <inputLayout:SfTextInputLayout Grid.Column="0" Hint="Valor" ContainerType="Outlined" ErrorText="Inválido" HasError="{Binding ErroIntervaloAvancado}">
+                            <Entry Text="{Binding IntervaloAvancado, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <inputLayout:SfTextInputLayout Grid.Column="1" Hint="Unidade" ContainerType="Outlined" ErrorText="Selecione" HasError="{Binding ErroTipoIntervalo}">
+                            <Picker SelectedItem="{Binding TipoIntervalo}">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Hora</x:String>
+                                        <x:String>Dia</x:String>
+                                        <x:String>Mês</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </inputLayout:SfTextInputLayout>
+                    </Grid>
+
+                    <!-- Frequência (NOVOS CAMPOS) -->
+                    <Label Text="Frequência (Repetições)" FontSize="14" FontAttributes="Bold" TextColor="Gray" Margin="0,10,0,0"/>
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                        <inputLayout:SfTextInputLayout Grid.Column="0" Hint="Vezes" ContainerType="Outlined" ErrorText="Inválido" HasError="{Binding ErroFrequenciaAvancado}">
+                            <Entry Text="{Binding FrequenciaAvancado, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <inputLayout:SfTextInputLayout Grid.Column="1" Hint="Por Unidade" ContainerType="Outlined" ErrorText="Selecione" HasError="{Binding ErroTipoFrequencia}">
+                            <Picker SelectedItem="{Binding TipoFrequencia}">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Hora</x:String>
+                                        <x:String>Dia</x:String>
+                                        <x:String>Mês</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </inputLayout:SfTextInputLayout>
+                    </Grid>
+
                 </VerticalStackLayout>
             </Grid>
 
-            <Button Text="Salvar"
-                    Command="{Binding SalvarCommand}"/>
+            <!-- Botão Salvar -->
+            <Button Text="Salvar Configuração"
+                    Command="{Binding SalvarCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Margin="0,20,0,0"/>
+
+            <!-- Indicador -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}"/>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
