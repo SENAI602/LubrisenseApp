@@ -6,102 +6,161 @@
              xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
              x:Class="Lubrisense.Views.DeviceConfigView"
              Title="Configuração"
+             BackgroundColor="#F5F5F5"
              x:DataType="viewModels:DeviceConfigViewModel">
+
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+            <Color x:Key="PrimaryColor">#2196F3</Color>
+            <Color x:Key="ActiveText">White</Color>
+            <Color x:Key="InactiveText">#666666</Color>
+
+            <Style x:Key="TabButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource InactiveText}" />
+                <Setter Property="BorderColor" Value="#CCCCCC" />
+                <Setter Property="BorderWidth" Value="1" />
+                <Setter Property="CornerRadius" Value="20" />
+                <Setter Property="HeightRequest" Value="40" />
+                <Setter Property="Margin" Value="5,0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="FontAttributes" Value="None" />
+            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Modo Básico"
-                 Command="{Binding ChangeBasicClickedCommand}"
-                 Order="Secondary" />
-        <ToolbarItem Text="Modo Avançado"
-                 Command="{Binding ChangeAdvanceClickedCommand}"
-                 Order="Secondary" />
-    </ContentPage.ToolbarItems>
+
     <ScrollView>
-        <VerticalStackLayout Margin="10" Spacing="20">
-            <Grid>
-                <VerticalStackLayout x:Name="LayoutBasico"
-                                     IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}">
-                    <inputLayout:SfTextInputLayout Hint="Volume"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Insira o volume do lubrificante"
-                                                   HelperText="Quantidade em gramas"
-                                                   HasError="{Binding ErroVolumeBasico}">
-                        <Entry Text="{Binding VolumeBasico, Mode=TwoWay}"
-                               Keyboard="Numeric"/>
-                    </inputLayout:SfTextInputLayout>
+        <VerticalStackLayout Margin="15" Spacing="20">
 
-                    <inputLayout:SfTextInputLayout Hint="Intervalo"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Necessário inserir o intervalo"
-                                                   HelperText="Em meses"
-                                                   HasError="{Binding ErroIntervaloBasico}">
-                        <Picker SelectedItem="{Binding IntervaloBasico}">
-                            <Picker.ItemsSource>
-                                <x:Array Type="{x:Type x:String}">
-                                    <x:String>1</x:String>
-                                    <x:String>2</x:String>
-                                    <x:String>3</x:String>
-                                    <x:String>4</x:String>
-                                    <x:String>5</x:String>
-                                    <x:String>6</x:String>
-                                    <x:String>7</x:String>
-                                    <x:String>8</x:String>
-                                    <x:String>9</x:String>
-                                    <x:String>10</x:String>
-                                    <x:String>11</x:String>
-                                    <x:String>12</x:String>
-                                </x:Array>
-                            </Picker.ItemsSource>
-                        </Picker>
-                    </inputLayout:SfTextInputLayout>
-                </VerticalStackLayout>
+            <!-- 1. SELETOR DE MODO (Abas) -->
+            <Grid ColumnDefinitions="*,*" Margin="0,0,0,10">
+                <Button Grid.Column="0" 
+                        Text="Básico"
+                        Command="{Binding OnChangeBasicClickedCommand}"
+                        Style="{StaticResource TabButtonStyle}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding ConfigIsAdvanced}" Value="False">
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
+                            <Setter Property="TextColor" Value="{StaticResource ActiveText}" />
+                            <Setter Property="BorderColor" Value="{StaticResource PrimaryColor}" />
+                            <Setter Property="FontAttributes" Value="Bold" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
 
-                <VerticalStackLayout x:Name="LayoutAvancado"
-                                     IsVisible="{Binding ConfigIsAdvanced}">
-                    <inputLayout:SfTextInputLayout Hint="Volume"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Insira o volume do lubrificante"
-                                                   HelperText="Quantidade em gramas"
-                                                   HasError="{Binding ErroVolumeAvancado}">
-                        <Entry Text="{Binding VolumeAvancado, Mode=TwoWay}"
-                   Keyboard="Numeric"/>
-                    </inputLayout:SfTextInputLayout>
-
-                    <inputLayout:SfTextInputLayout Hint="Intervalo"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Insira o intervalo de lubrificação"
-                                                   HelperText="Intervalo para lubrificação"
-                                                   HasError="{Binding ErroIntervaloAvancado}">
-                        <Entry Text="{Binding IntervaloAvancado, Mode=TwoWay}"
-                               Keyboard="Numeric"/>
-                    </inputLayout:SfTextInputLayout>
-
-                    <inputLayout:SfTextInputLayout Hint="Tipo de intervalo"
-                                                   ContainerType="Outlined"
-                                                   ErrorText="Necessário inserir o tipo de intervalo"
-                                                   HelperText="Hora, dia ou mês"
-                                                   HasError="{Binding ErroTipoIntervalo}">
-                        <Picker SelectedItem="{Binding TipoIntervalo}">
-                            <Picker.ItemsSource>
-                                <x:Array Type="{x:Type x:String}">
-                                    <x:String>Nenhum</x:String>
-                                    <x:String>Hora</x:String>
-                                    <x:String>Dia</x:String>
-                                    <x:String>Mês</x:String>
-                                </x:Array>
-                            </Picker.ItemsSource>
-                        </Picker>
-                    </inputLayout:SfTextInputLayout>
-                    
-                </VerticalStackLayout>
+                <Button Grid.Column="1" 
+                        Text="Avançado"
+                        Command="{Binding OnChangeAdvanceClickedCommand}"
+                        Style="{StaticResource TabButtonStyle}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding ConfigIsAdvanced}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
+                            <Setter Property="TextColor" Value="{StaticResource ActiveText}" />
+                            <Setter Property="BorderColor" Value="{StaticResource PrimaryColor}" />
+                            <Setter Property="FontAttributes" Value="Bold" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
             </Grid>
 
-            <Button Text="Salvar"
-                    Command="{Binding SalvarCommand}"/>
+            <!-- 2. CARTÃO DE FORMULÁRIO -->
+            <Frame BackgroundColor="White" CornerRadius="10" HasShadow="True" BorderColor="Transparent" Padding="20">
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- Titulo e Descrição Dinâmicos -->
+                    <Label Text="{Binding ConfigIsAdvanced, Converter={toolkit:BoolToObjectConverter TrueObject='Modo Avançado', FalseObject='Modo Básico'}}"
+                           TextColor="#333333" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" />
+
+                    <Label Text="{Binding ConfigIsAdvanced, Converter={toolkit:BoolToObjectConverter TrueObject='Controle sobre cada dosagem com quantidade e frequência', FalseObject='Distribuição do lubrificante ao longo do tempo total'}}"
+                           TextColor="#777777" FontSize="12" HorizontalOptions="Center" Margin="0,-15,0,10"/>
+
+                    <!-- ==================================================== -->
+                    <!-- LAYOUT BÁSICO (Volume, Duração, Frequência)          -->
+                    <!-- ==================================================== -->
+                    <VerticalStackLayout Spacing="20" IsVisible="{Binding ConfigIsAdvanced, Converter={StaticResource InvertedBoolConverter}}">
+
+                        <!-- 1. Volume -->
+                        <inputLayout:SfTextInputLayout Hint="Volume Total do Lubrificante (g)" ContainerType="Outlined" HasError="{Binding ErroVolume}">
+                            <Entry Text="{Binding Volume, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <!-- 2. Duração Total (Intervalo Basico) -->
+                        <inputLayout:SfTextInputLayout Hint="Duração Total do Plano de Lubrificação" ContainerType="Outlined" HasError="{Binding ErroDuracaoTotal}">
+                            <Entry Text="{Binding DuracaoTotal, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <!-- 3. Unidade da Duração -->
+                        <inputLayout:SfTextInputLayout Hint="Unidade da Duração" ContainerType="Outlined" HasError="{Binding ErroTipoDuracao}">
+                            <Picker SelectedItem="{Binding TipoDuracao}" Title="Selecione...">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Hora</x:String>
+                                        <x:String>Dia</x:String>
+                                        <x:String>Mês</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </inputLayout:SfTextInputLayout>
+
+                        <BoxView HeightRequest="1" Color="#EEEEEE" Margin="0,5" />
+                        <Label Text="Configuração de Frequência da Dosagem" FontSize="12" TextColor="#2196F3" FontAttributes="Bold"/>
+
+                        <!-- 4 e 5. Frequência e Unidade (Lado a Lado) -->
+                        <Grid ColumnDefinitions="*, Auto, *">
+                            <inputLayout:SfTextInputLayout Grid.Column="0" Hint="A cada..." ContainerType="Outlined" HasError="{Binding ErroFrequencia}">
+                                <Entry Text="{Binding Frequencia, Mode=TwoWay}" Keyboard="Numeric" HorizontalTextAlignment="Center"/>
+                            </inputLayout:SfTextInputLayout>
+
+                            <inputLayout:SfTextInputLayout Grid.Column="2" Hint="Unidade" ContainerType="Outlined" HasError="{Binding ErroTipoFrequencia}">
+                                <Picker SelectedItem="{Binding TipoFrequencia}" Title="Selecione...">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>Hora</x:String>
+                                            <x:String>Dia</x:String>
+                                            <x:String>Mês</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </inputLayout:SfTextInputLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <!-- ==================================================== -->
+                    <!-- LAYOUT AVANÇADO (Volume, Intervalo Ciclo)            -->
+                    <!-- ==================================================== -->
+                    <VerticalStackLayout Spacing="20" IsVisible="{Binding ConfigIsAdvanced}">
+
+                        <!-- 1. Volume (Avançado) -->
+                        <inputLayout:SfTextInputLayout Hint="Volume por dosagem (g)" ContainerType="Outlined" HasError="{Binding ErroVolume}">
+                            <Entry Text="{Binding Volume, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <!-- 2. Intervalo (Ciclo) -->
+                        <inputLayout:SfTextInputLayout Hint="Intervalo entre cada dosagem" ContainerType="Outlined" HasError="{Binding ErroIntervaloAvancado}">
+                            <Entry Text="{Binding IntervaloAvancado, Mode=TwoWay}" Keyboard="Numeric"/>
+                        </inputLayout:SfTextInputLayout>
+
+                        <!-- 3. Unidade do Intervalo -->
+                        <inputLayout:SfTextInputLayout Hint="Unidade do intervalo" ContainerType="Outlined" HasError="{Binding ErroTipoIntervalo}">
+                            <Picker SelectedItem="{Binding TipoIntervalo}" Title="Selecione...">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Hora</x:String>
+                                        <x:String>Dia</x:String>
+                                        <x:String>Mês</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </inputLayout:SfTextInputLayout>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <Button Text="SALVAR CONFIGURAÇÃO" Command="{Binding SalvarCommand}" BackgroundColor="#4CAF50" TextColor="White" FontAttributes="Bold" CornerRadius="25" HeightRequest="50" Margin="0,10,0,0"/>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
