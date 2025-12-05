@@ -8,19 +8,15 @@ namespace Lubrisense.ViewModels
     [QueryProperty(nameof(DeviceUuid), "DeviceUuid")]
     public partial class DeviceMenuViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private string _deviceTitle = "Dispositivo"; // Equipamento
+        [ObservableProperty] private string _deviceTitle = "Dispositivo";
+        [ObservableProperty] private string _deviceSubTitle = "";
+        [ObservableProperty] private string _deviceSetor = "";
+        [ObservableProperty] private string _deviceLubricant = "";
 
-        [ObservableProperty]
-        private string _deviceSubTitle = ""; // TAG
-
-        // --- NOVAS PROPRIEDADES ---
-        [ObservableProperty]
-        private string _deviceSetor = "";
-
-        [ObservableProperty]
-        private string _deviceLubricant = "";
-        // --------------------------
+        // --- NOVAS PROPRIEDADES VISUAIS ---
+        [ObservableProperty] private string _deviceBattery = "-- %";
+        [ObservableProperty] private string _deviceTemperature = "-- °C";
+        // ----------------------------------
 
         private string _deviceUuid;
         public string DeviceUuid
@@ -40,10 +36,12 @@ namespace Lubrisense.ViewModels
             {
                 DeviceTitle = string.IsNullOrEmpty(device.Equipamento) ? "Dispositivo Sem Nome" : device.Equipamento;
                 DeviceSubTitle = string.IsNullOrEmpty(device.Tag) ? "Sem TAG" : $"TAG: {device.Tag}";
-
-                // Carrega as novas informações
                 DeviceSetor = string.IsNullOrEmpty(device.Setor) ? "Setor não definido" : $"Setor: {device.Setor}";
                 DeviceLubricant = string.IsNullOrEmpty(device.Lubrificante) ? "Lubrificante não definido" : $"Lubrificante: {device.Lubrificante}";
+
+                // Carrega Status
+                DeviceBattery = $"{device.Bateria}%";
+                DeviceTemperature = $"{device.Temperatura:F1}°C";
             }
         }
 

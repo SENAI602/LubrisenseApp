@@ -11,36 +11,68 @@
     <ScrollView>
         <VerticalStackLayout Spacing="25" Padding="20">
 
-            <!-- CABEÇALHO (CARD DE INFO) -->
+            <!-- CABEÇALHO (CARD DE INFO E STATUS) -->
             <Frame BackgroundColor="White" CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="20">
-                <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
 
-                    <!-- Ícone REMOVIDO conforme solicitado -->
+                <!-- GRID ORGANIZADOR -->
+                <!-- Coluna 0: Texto (*) | Coluna 1: Status (Auto) -->
+                <!-- Linhas: Definem a altura dos status -->
+                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
 
-                    <!-- Nome do Equipamento (Destaque) -->
-                    <Label Text="{Binding DeviceTitle}" 
-                           FontSize="22" 
-                           FontAttributes="Bold" 
-                           TextColor="#101828" 
-                           HorizontalTextAlignment="Center"/>
+                    <!-- === COLUNA 0: IDENTIFICAÇÃO (Ocupa as 2 linhas) === -->
+                    <VerticalStackLayout Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" 
+                                         VerticalOptions="Center" Spacing="4">
 
-                    <!-- Informações Secundárias -->
-                    <Label Text="{Binding DeviceSubTitle}" 
-                           FontSize="14" 
-                           TextColor="#667085" 
-                           HorizontalTextAlignment="Center"/>
+                        <!-- Nome Principal -->
+                        <Label Text="{Binding DeviceTitle}" 
+                               FontSize="24" 
+                               FontAttributes="Bold" 
+                               TextColor="#101828"
+                               LineBreakMode="TailTruncation"/>
 
-                    <Label Text="{Binding DeviceSetor}" 
-                           FontSize="14" 
-                           TextColor="#667085" 
-                           HorizontalTextAlignment="Center"/>
+                        <!-- Detalhes -->
+                        <Label Text="{Binding DeviceSubTitle}" 
+                               FontSize="18" 
+                               TextColor="#667085"/>
 
-                    <Label Text="{Binding DeviceLubricant}" 
-                           FontSize="14" 
-                           TextColor="#667085" 
-                           HorizontalTextAlignment="Center"/>
+                        <Label Text="{Binding DeviceSetor}" 
+                               FontSize="18" 
+                               TextColor="#667085"/>
 
-                </VerticalStackLayout>
+                        <Label Text="{Binding DeviceLubricant}" 
+                               FontSize="18" 
+                               TextColor="#667085"/>
+                    </VerticalStackLayout>
+
+                    <!-- === COLUNA 1, LINHA 0: BATERIA === -->
+                    <VerticalStackLayout Grid.Column="1" Grid.Row="0" HorizontalOptions="Center" Spacing="0">
+                        <Label Text="🔋" FontSize="24" HorizontalOptions="Center"/>
+                        <Label Text="{Binding DeviceBattery}" 
+                               FontSize="16" 
+                               FontAttributes="Bold" 
+                               TextColor="#333333" 
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Bateria" 
+                               FontSize="14" 
+                               TextColor="#999999" 
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+
+                    <!-- === COLUNA 1, LINHA 1: TEMPERATURA === -->
+                    <VerticalStackLayout Grid.Column="1" Grid.Row="1" HorizontalOptions="Center" Spacing="0">
+                        <Label Text="🌡️" FontSize="24" HorizontalOptions="Center"/>
+                        <Label Text="{Binding DeviceTemperature}" 
+                               FontSize="16" 
+                               FontAttributes="Bold" 
+                               TextColor="#333333" 
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Temp." 
+                               FontSize="14" 
+                               TextColor="#999999" 
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+
+                </Grid>
             </Frame>
 
             <Label Text="Ações Disponíveis" TextColor="#667085" FontSize="14" FontAttributes="Bold" Margin="5,0,0,0"/>
@@ -48,7 +80,7 @@
             <!-- GRID DE BOTÕES (MENU) -->
             <Grid RowDefinitions="140, 140" ColumnDefinitions="*,*" ColumnSpacing="15" RowSpacing="15">
 
-                <!-- BOTÃO 1: CONFIGURAÇÃO (PARÂMETROS) -->
+                <!-- BOTÃO 1: CONFIGURAÇÃO -->
                 <Frame Grid.Row="0" Grid.Column="0" 
                        CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="0"
                        BackgroundColor="White">

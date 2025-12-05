@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using static Lubrisense.App;
 
 namespace Lubrisense.Models
@@ -12,15 +11,18 @@ namespace Lubrisense.Models
         public string Setor { get; set; }
         public string Lubrificante { get; set; }
 
-        // --- Configurações Originais ---
-        public int TipoConfig { get; set; }     // 0=Basico, 1=Avancado
-        public int TipoIntervalo { get; set; }  // 1=Hora, 2=Dia, 3=Mês
-        public int Volume { get; set; }         // Gramas
-        public int Intervalo { get; set; }      // Valor do intervalo
+        // Configurações
+        public int TipoConfig { get; set; }
+        public int TipoIntervalo { get; set; }
+        public int Volume { get; set; }
+        public int Intervalo { get; set; }
+        public int Frequencia { get; set; }
+        public int TipoFrequencia { get; set; }
 
-        // --- NOVOS CAMPOS PARA O FIRMWARE HÍBRIDO ---
-        public int Frequencia { get; set; } = 1;     // Ex: 1 vez
-        public int TipoFrequencia { get; set; } = 2; // Ex: por Dia (2)
+        // --- NOVOS CAMPOS DE STATUS ---
+        public int Bateria { get; set; } = 0;       // % (0-100)
+        public double Temperatura { get; set; } = 0.0; // Graus Celsius
+        // ------------------------------
 
         public DateTime UltimaConexao { get; set; }
 
@@ -36,13 +38,15 @@ namespace Lubrisense.Models
             Equipamento = string.Empty;
             Setor = string.Empty;
             Lubrificante = string.Empty;
-
-            // Defaults
             TipoConfig = (int)CONFIGTYPE.BASICO;
             TipoIntervalo = (int)INTERVALTYPE.MES;
-
             Volume = 0;
             Intervalo = 0;
+
+            // Inicializa status
+            Bateria = 0;
+            Temperatura = 0;
+
             UltimaConexao = DateTime.Now;
             IsOnline = false;
         }
@@ -54,7 +58,6 @@ namespace Lubrisense.Models
             {
                 if (string.IsNullOrEmpty(Uuid) || !Guid.TryParse(Uuid, out Guid deviceGuid))
                     return "ID Desconhecido";
-
                 var bytes = deviceGuid.ToByteArray();
                 var macBytes = new byte[6];
                 Array.Copy(bytes, 10, macBytes, 0, 6);
