@@ -6,65 +6,180 @@
              xmlns:fonts="clr-namespace:Lubrisense.Resources.Fonts"
              x:Class="Lubrisense.Views.DeviceView"
              x:DataType="viewModels:DeviceViewModel"
-             Title="Dispositivos">
+             Title="LubriSense"
+             BackgroundColor="#F2F4F7">
 
-    <!-- ToolbarItems (Botão Bluetooth) REMOVIDO -->
+    <!-- GRID PAI: Permite sobreposição de camadas -->
+    <Grid>
 
-    <Grid RowDefinitions="*" VerticalOptions="Fill" Padding="10">
-        <CollectionView x:Name="DevicesList" 
-                        Grid.Row="0" 
-                        SelectionMode="Single" 
-                        ItemsSource="{Binding LstDevices}" 
-                        IsGrouped="true"
-                        SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
-                        SelectionChangedCommand="{Binding DeviceTappedCommand}"
-                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={x:Reference DevicesList}}">
-            <CollectionView.GroupHeaderTemplate>
-                <DataTemplate x:DataType="models:DeviceGroup">
-                    <Label Text="{Binding Nome}"
-                           FontSize="16"
-                           TextColor="{StaticResource FremtecBlue}"
-                           FontAttributes="Bold"/>
-                </DataTemplate>
-            </CollectionView.GroupHeaderTemplate>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:ShowDevice">
-                    <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*,60" Padding="10">
-                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Equipamento}" TextColor="{StaticResource FremtecBlueAccent }"/>
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding MacAddressDisplay}" TextColor="{StaticResource FremtecGrayDark}"/>
-                        <Label Grid.RowSpan="2" 
-                               Grid.Column="1"
-                               TextColor="Red"
+        <!-- CAMADA 1: O CONTEÚDO PRINCIPAL (Sua tela original) -->
+        <Grid RowDefinitions="Auto, *" Padding="15,10,15,0">
+
+            <!-- 1. CABEÇALHO DA PÁGINA -->
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,15">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Meus Dispositivos" 
+                           FontSize="22" 
+                           FontAttributes="Bold" 
+                           TextColor="#101828"/>
+                    <Label Text="Selecione para configurar" 
+                           FontSize="14" 
+                           TextColor="#667085"/>
+                </VerticalStackLayout>
+
+                <!-- Indicador de Scan -->
+                <Frame Grid.Column="1" 
+                       Padding="8" 
+                       CornerRadius="20" 
+                       HasShadow="False" 
+                       BackgroundColor="White" 
+                       BorderColor="#E4E7EC"
+                       IsVisible="{Binding IsScanning}">
+                    <HorizontalStackLayout Spacing="8">
+                        <ActivityIndicator IsRunning="True" Color="#2196F3" HeightRequest="18" WidthRequest="18"/>
+                        <Label Text="Buscando..." FontSize="12" TextColor="#2196F3" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- 2. LISTA DE DISPOSITIVOS -->
+            <CollectionView x:Name="DevicesList" 
+                            Grid.Row="1" 
+                            SelectionMode="None" 
+                            ItemsSource="{Binding LstDevices}" 
+                            IsGrouped="true">
+
+                <!-- Cabeçalho do Grupo -->
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="models:DeviceGroup">
+                        <Label Text="{Binding Nome}"
+                               FontSize="13"
+                               TextColor="#98A2B3"
                                FontAttributes="Bold"
-                               VerticalOptions="Center"
+                               TextTransform="Uppercase"
+                               Margin="5,15,0,5"/>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <!-- CARTÃO DO DISPOSITIVO -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:ShowDevice">
+                        <Grid Padding="0,6">
+                            <Frame CornerRadius="16" 
+                                   HasShadow="True" 
+                                   BackgroundColor="White"
+                                   Padding="15"
+                                   BorderColor="Transparent">
+
+                                <!-- GESTO DE TOQUE -->
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:DeviceViewModel}}, Path=DeviceTappedCommand}"
+                                        CommandParameter="{Binding .}"
+                                        NumberOfTapsRequired="1" />
+                                </Frame.GestureRecognizers>
+
+                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+
+                                    <!-- Coluna 0: Informações Principais -->
+                                    <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding Equipamento}" 
+                                               TextColor="#101828" 
+                                               FontAttributes="Bold" 
+                                               FontSize="16"
+                                               LineBreakMode="TailTruncation"/>
+
+                                        <HorizontalStackLayout Spacing="4">
+                                            <Label Text="ID:" TextColor="#98A2B3" FontSize="12"/>
+                                            <Label Text="{Binding MacAddressDisplay}" 
+                                                   TextColor="#667085" 
+                                                   FontSize="12"
+                                                   LineBreakMode="MiddleTruncation"/>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+
+                                    <!-- Coluna 1: Status Conexão -->
+                                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="2">
+                                        <Label FontFamily="FluentRegular" FontSize="22" HorizontalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="True">
+                                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_1_24_regular}" />
+                                                    <Setter Property="TextColor" Value="#2E7D32" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_off_24_regular}" />
+                                                    <Setter Property="TextColor" Value="#D32F2F" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+
+                                        <Label FontSize="10" FontAttributes="Bold" HorizontalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="True">
+                                                    <Setter Property="Text" Value="Online" />
+                                                    <Setter Property="TextColor" Value="#2E7D32" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Text" Value="Offline" />
+                                                    <Setter Property="TextColor" Value="#D32F2F" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </VerticalStackLayout>
+
+                                </Grid>
+                            </Frame>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.GroupFooterTemplate>
+                    <DataTemplate x:DataType="models:DeviceGroup">
+                        <Label Text="{Binding Count, StringFormat='Total: {0}'}"
+                               FontSize="11"
+                               TextColor="#98A2B3"
                                HorizontalOptions="End"
-                               FontFamily="FluentRegular"
-                               FontSize="26">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label"
-                                    Binding="{Binding IsOnline}"
-                                    Value="True">
-                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_1_24_regular}" />
-                                    <Setter Property="TextColor" Value="Green" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label"
-                                    Binding="{Binding IsOnline}"
-                                    Value="False">
-                                    <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_off_24_regular}" />
-                                    <Setter Property="TextColor" Value="Red" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-            <CollectionView.GroupFooterTemplate>
-                <DataTemplate x:DataType="models:DeviceGroup">
-                    <Label Text="{Binding Count, StringFormat='Total de dispositivos: {0:D}'}"
-                           TextColor="{StaticResource FremtecGrayDark}"/>
-                </DataTemplate>
-            </CollectionView.GroupFooterTemplate>
-        </CollectionView>
+                               Margin="0,2,10,15"/>
+                    </DataTemplate>
+                </CollectionView.GroupFooterTemplate>
+
+                <CollectionView.Footer>
+                    <BoxView HeightRequest="20" Color="Transparent"/>
+                </CollectionView.Footer>
+            </CollectionView>
+        </Grid>
+
+        <!-- CAMADA 2: POPUP DE LOADING (OVERLAY) -->
+        <!-- Só aparece quando IsBusyConnecting for True -->
+        <Grid BackgroundColor="#80000000"
+              IsVisible="{Binding IsBusyConnecting}"
+              InputTransparent="False"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill">
+
+            <Frame VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   BackgroundColor="White"
+                   CornerRadius="15"
+                   Padding="25"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="15">
+                    <ActivityIndicator IsRunning="True" 
+                                       Color="#2196F3"
+                                       HeightRequest="40"
+                                       WidthRequest="40"/>
+                    <Label Text="Conectando e Sincronizando..." 
+                           TextColor="#333333"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Bold"/>
+                    <Label Text="Aguarde um momento" 
+                           TextColor="#666666"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
 
     </Grid>
 </ContentPage>
