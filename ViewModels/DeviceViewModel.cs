@@ -29,20 +29,27 @@ namespace Lubrisense.ViewModels
             AddDevice("Dispositivos conhecidos", new List<ShowDevice>());
         }
 
-        // --- MÉTODO CHAMADO AO ENTRAR NA TELA ---
+        // --- CORREÇÃO APLICADA AQUI ---
         public async void OnAppearing()
         {
             IsBusyConnecting = false;
             SelectedDevice = null;
+
+            // 1. Garante que não há conexões presas
+            // Isso libera o ESP32 para voltar a anunciar e aparecer no Scan
+            _bluetoothService.Disconnect();
+
+            // 2. Limpa e atualiza as listas
             UpdateKnownDevices();
             ClearNewDevices();
 
-            // Inicia o scan automaticamente (se já não estiver escaneando)
+            // 3. Inicia o scan automaticamente
             if (!IsScanning)
             {
                 await StartScanAsync();
             }
         }
+        // -------------------------------
 
         public void ClearNewDevices()
         {
@@ -68,7 +75,6 @@ namespace Lubrisense.ViewModels
 
         public void AddDevice(string name, List<ShowDevice> devices) { LstDevices.Add(new DeviceGroup(name, devices)); }
 
-        // Método auxiliar para iniciar o scan com segurança
         private async Task StartScanAsync()
         {
             try
@@ -89,6 +95,13 @@ namespace Lubrisense.ViewModels
                 await Shell.Current.DisplayAlert("Erro", $"Scan falhou: {ex.Message}", "OK");
                 IsScanning = false;
             }
+        }
+
+        [RelayCommand]
+        private async Task ToggleScanAsync()
+        {
+            if (IsScanning) { _bluetoothService.StopScan(); IsScanning = false; return; }
+            await StartScanAsync();
         }
 
         private void _bluetoothService_DevicesUpdated() { var online = _bluetoothService.DiscoveredDevices; UpdateStatusDevice(online); }
