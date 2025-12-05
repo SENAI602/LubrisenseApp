@@ -2,64 +2,123 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:Lubrisense.ViewModels"
+             xmlns:fonts="clr-namespace:Lubrisense.Resources.Fonts"
              x:Class="Lubrisense.Views.DeviceMenuView"
              Title="Menu do Dispositivo"
-             BackgroundColor="#F5F5F5"
+             BackgroundColor="#F2F4F7"
              x:DataType="viewModels:DeviceMenuViewModel">
 
     <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
+        <VerticalStackLayout Spacing="25" Padding="20">
 
-            <!-- Cabeçalho com Info do Dispositivo -->
-            <Frame BackgroundColor="White" CornerRadius="10" HasShadow="True" BorderColor="Transparent" Padding="20">
+            <!-- CABEÇALHO (CARD DE INFO) -->
+            <Frame BackgroundColor="White" CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="20">
                 <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+
+                    <!-- Ícone REMOVIDO conforme solicitado -->
+
+                    <!-- Nome do Equipamento (Destaque) -->
                     <Label Text="{Binding DeviceTitle}" 
-                           FontSize="20" 
+                           FontSize="22" 
                            FontAttributes="Bold" 
-                           TextColor="#333333" 
+                           TextColor="#101828" 
                            HorizontalTextAlignment="Center"/>
 
+                    <!-- Informações Secundárias -->
                     <Label Text="{Binding DeviceSubTitle}" 
                            FontSize="14" 
-                           TextColor="Gray" 
+                           TextColor="#667085" 
                            HorizontalTextAlignment="Center"/>
+
+                    <Label Text="{Binding DeviceSetor}" 
+                           FontSize="14" 
+                           TextColor="#667085" 
+                           HorizontalTextAlignment="Center"/>
+
+                    <Label Text="{Binding DeviceLubricant}" 
+                           FontSize="14" 
+                           TextColor="#667085" 
+                           HorizontalTextAlignment="Center"/>
+
                 </VerticalStackLayout>
             </Frame>
 
-            <Label Text="Ações Disponíveis" TextColor="#666666" FontSize="14" Margin="0,10,0,0"/>
+            <Label Text="Ações Disponíveis" TextColor="#667085" FontSize="14" FontAttributes="Bold" Margin="5,0,0,0"/>
 
-            <!-- Botão 1: Parâmetros -->
-            <Button Text="Editar Parâmetros"
-                    Command="{Binding GoToParametersCommand}"
-                    BackgroundColor="White"
-                    TextColor="#2196F3"
-                    BorderColor="#2196F3"
-                    BorderWidth="1"
-                    CornerRadius="10"
-                    HeightRequest="60"
-                    FontAttributes="Bold"/>
+            <!-- GRID DE BOTÕES (MENU) -->
+            <Grid RowDefinitions="140, 140" ColumnDefinitions="*,*" ColumnSpacing="15" RowSpacing="15">
 
-            <!-- Botão 2: Histórico -->
-            <Button Text="Visualizar Histórico"
-                    Command="{Binding GoToHistoryCommand}"
-                    BackgroundColor="White"
-                    TextColor="#2196F3"
-                    BorderColor="#2196F3"
-                    BorderWidth="1"
-                    CornerRadius="10"
-                    HeightRequest="60"
-                    FontAttributes="Bold"/>
+                <!-- BOTÃO 1: CONFIGURAÇÃO (PARÂMETROS) -->
+                <Frame Grid.Row="0" Grid.Column="0" 
+                       CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="0"
+                       BackgroundColor="White">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToParametersCommand}"/>
+                    </Frame.GestureRecognizers>
 
-            <!-- Botão 3: Controle Manual -->
-            <Button Text="Habilitar Dosagem Manual"
-                    Command="{Binding ToggleManualDosageCommand}"
-                    BackgroundColor="White"
-                    TextColor="#FF9800"
-                    BorderColor="#FF9800"
-                    BorderWidth="1"
-                    CornerRadius="10"
-                    HeightRequest="60"
-                    FontAttributes="Bold"/>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                        <Label Text="{x:Static fonts:FluentUI.settings_24_regular}" 
+                               FontFamily="FluentRegular" 
+                               FontSize="32" 
+                               TextColor="#2196F3"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Configurar" 
+                               TextColor="#344054" 
+                               FontSize="14" 
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- BOTÃO 2: HISTÓRICO -->
+                <Frame Grid.Row="0" Grid.Column="1" 
+                       CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="0"
+                       BackgroundColor="White">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToHistoryCommand}"/>
+                    </Frame.GestureRecognizers>
+
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                        <Label Text="{x:Static fonts:FluentUI.history_24_regular}" 
+                               FontFamily="FluentRegular" 
+                               FontSize="32" 
+                               TextColor="#7B1FA2"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Histórico" 
+                               TextColor="#344054" 
+                               FontSize="14" 
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- BOTÃO 3: CONTROLE MANUAL -->
+                <Frame Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                       CornerRadius="16" HasShadow="True" BorderColor="Transparent" Padding="0"
+                       BackgroundColor="White">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleManualDosageCommand}"/>
+                    </Frame.GestureRecognizers>
+
+                    <HorizontalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="15">
+                        <Label Text="{x:Static fonts:FluentUI.hand_right_24_regular}" 
+                               FontFamily="FluentRegular" 
+                               FontSize="32" 
+                               TextColor="#FF9800"
+                               VerticalOptions="Center"/>
+                        <VerticalStackLayout VerticalOptions="Center">
+                            <Label Text="Dosagem Manual" 
+                                   TextColor="#344054" 
+                                   FontSize="16" 
+                                   FontAttributes="Bold"/>
+                            <Label Text="Habilitar controle direto" 
+                                   TextColor="#98A2B3" 
+                                   FontSize="12"/>
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </Frame>
+
+            </Grid>
 
         </VerticalStackLayout>
     </ScrollView>

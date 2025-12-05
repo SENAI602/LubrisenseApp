@@ -143,9 +143,6 @@
                     </DataTemplate>
                 </CollectionView.GroupFooterTemplate>
 
-                <CollectionView.Footer>
-                    <BoxView HeightRequest="20" Color="Transparent"/>
-                </CollectionView.Footer>
             </CollectionView>
         </Grid>
 

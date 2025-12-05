@@ -9,10 +9,18 @@ namespace Lubrisense.ViewModels
     public partial class DeviceMenuViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string _deviceTitle = "Dispositivo";
+        private string _deviceTitle = "Dispositivo"; // Equipamento
 
         [ObservableProperty]
-        private string _deviceSubTitle = "";
+        private string _deviceSubTitle = ""; // TAG
+
+        // --- NOVAS PROPRIEDADES ---
+        [ObservableProperty]
+        private string _deviceSetor = "";
+
+        [ObservableProperty]
+        private string _deviceLubricant = "";
+        // --------------------------
 
         private string _deviceUuid;
         public string DeviceUuid
@@ -31,27 +39,26 @@ namespace Lubrisense.ViewModels
             if (device != null)
             {
                 DeviceTitle = string.IsNullOrEmpty(device.Equipamento) ? "Dispositivo Sem Nome" : device.Equipamento;
-                DeviceSubTitle = string.IsNullOrEmpty(device.Tag) ? "Sem TAG" : device.Tag;
+                DeviceSubTitle = string.IsNullOrEmpty(device.Tag) ? "Sem TAG" : $"TAG: {device.Tag}";
+
+                // Carrega as novas informações
+                DeviceSetor = string.IsNullOrEmpty(device.Setor) ? "Setor não definido" : $"Setor: {device.Setor}";
+                DeviceLubricant = string.IsNullOrEmpty(device.Lubrificante) ? "Lubrificante não definido" : $"Lubrificante: {device.Lubrificante}";
             }
         }
 
-        // 1. Navegar para Configuração (Edição de Parâmetros)
         [RelayCommand]
         private async Task GoToParameters()
         {
-            // Navega para a tela de configuração que já criamos
             await Shell.Current.GoToAsync($"DeviceConfigView?DeviceUuid={DeviceUuid}");
         }
 
-        // 2. Navegar para Histórico (Futuro)
         [RelayCommand]
         private async Task GoToHistory()
         {
             await Shell.Current.DisplayAlert("Em Breve", "A tela de histórico será implementada na próxima etapa.", "OK");
-            // Futuro: await Shell.Current.GoToAsync($"DeviceHistoryView?DeviceUuid={DeviceUuid}");
         }
 
-        // 3. Controle Manual
         [RelayCommand]
         private async Task ToggleManualDosage()
         {
