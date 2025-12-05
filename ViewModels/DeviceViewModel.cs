@@ -3,27 +3,19 @@ using CommunityToolkit.Mvvm.Input;
 using Lubrisense.Helpers;
 using Lubrisense.Models;
 using Lubrisense.Services;
-using Lubrisense.Views;
 using Shiny;
 using Shiny.BluetoothLE;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Lubrisense.ViewModels
 {
     public partial class DeviceViewModel : ObservableObject
     {
-        // Lista principal de dispositivos (agrupada)
-        public ObservableCollection<DeviceGroup> LstDevices { get; } = new();
-
-        [ObservableProperty]
-        private ShowDevice _selectedDevice;
-
-        [ObservableProperty]
-        private bool _isScanning;
+        [ObservableProperty] private ObservableCollection<DeviceGroup> _lstDevices;
+        [ObservableProperty] private ShowDevice _selectedDevice;
+        [ObservableProperty] private bool _isScanning;
+        [ObservableProperty] private bool _isBusyConnecting;
 
         private readonly BluetoothService _bluetoothService;
 
@@ -31,20 +23,33 @@ namespace Lubrisense.ViewModels
         {
             _bluetoothService = bluetoothService;
             _bluetoothService.DevicesUpdated += _bluetoothService_DevicesUpdated;
+            LstDevices = new ObservableCollection<DeviceGroup>();
 
-            // Inicializa os grupos vazios para evitar erro de null
-            LstDevices.Add(new DeviceGroup("Dispositivos novos", new List<ShowDevice>()));
-            LstDevices.Add(new DeviceGroup("Dispositivos conhecidos", new List<ShowDevice>()));
+            AddDevice("Dispositivos novos", new List<ShowDevice>());
+            AddDevice("Dispositivos conhecidos", new List<ShowDevice>());
         }
 
-        // Chamado pela View quando ela aparece (OnAppearing)
-        public void OnAppearing()
+        // --- MÉTODO CHAMADO AO ENTRAR NA TELA ---
+        public async void OnAppearing()
         {
+            IsBusyConnecting = false;
+            SelectedDevice = null;
             UpdateKnownDevices();
-            ResetDeviceStatus(); // Reseta status de online/offline
+            ClearNewDevices();
+
+            // Inicia o scan automaticamente (se já não estiver escaneando)
+            if (!IsScanning)
+            {
+                await StartScanAsync();
+            }
         }
 
-        // Carrega dispositivos salvos do banco de dados local
+        public void ClearNewDevices()
+        {
+            var grupoNovos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos novos");
+            grupoNovos?.Clear();
+        }
+
         public void UpdateKnownDevices()
         {
             var grupoConhecidos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos conhecidos");
@@ -52,88 +57,58 @@ namespace Lubrisense.ViewModels
             {
                 grupoConhecidos.Clear();
                 var listConhecidos = SavedDeviceStorage.Load();
+                if (listConhecidos == null) return;
 
-                if (listConhecidos != null)
+                foreach (var device in listConhecidos)
                 {
-                    foreach (var device in listConhecidos)
-                    {
-                        grupoConhecidos.Add(new ShowDevice
-                        {
-                            Uuid = device.Uuid,
-                            Equipamento = device.Equipamento,
-                            IsOnline = false // Padrão offline até o scan achar
-                        });
-                    }
+                    grupoConhecidos.Add(new ShowDevice { Uuid = device.Uuid, Equipamento = device.Equipamento, IsOnline = false });
                 }
             }
         }
 
-        // Botão de Scan na Toolbar
-        [RelayCommand]
-        private async Task ToggleScanAsync()
-        {
-            if (IsScanning)
-            {
-                _bluetoothService.StopScan();
-                IsScanning = false;
-                return;
-            }
+        public void AddDevice(string name, List<ShowDevice> devices) { LstDevices.Add(new DeviceGroup(name, devices)); }
 
+        // Método auxiliar para iniciar o scan com segurança
+        private async Task StartScanAsync()
+        {
             try
             {
                 var access = await _bluetoothService.RequestAccess();
-                if (access != AccessState.Available)
+                if (access != Shiny.AccessState.Available)
                 {
                     await Shell.Current.DisplayAlert("Permissão", "Bluetooth necessário.", "OK");
                     return;
                 }
 
-                ResetDeviceStatus(); // Limpa lista de novos e reseta status
+                ResetDeviceStatus();
                 IsScanning = true;
                 _bluetoothService.StartScan();
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Erro", $"Falha no scan: {ex.Message}", "OK");
+                await Shell.Current.DisplayAlert("Erro", $"Scan falhou: {ex.Message}", "OK");
                 IsScanning = false;
             }
         }
 
-        // Evento disparado pelo BluetoothService quando acha algo
-        private void _bluetoothService_DevicesUpdated()
-        {
-            var onlinePeripherals = _bluetoothService.DiscoveredDevices;
-            UpdateStatusDevice(onlinePeripherals);
-        }
+        private void _bluetoothService_DevicesUpdated() { var online = _bluetoothService.DiscoveredDevices; UpdateStatusDevice(online); }
 
         private void UpdateStatusDevice(IReadOnlyList<IPeripheral> onlinePeripherals)
         {
             var grupoConhecidos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos conhecidos");
             var grupoNovos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos novos");
-
             if (grupoConhecidos == null || grupoNovos == null) return;
-
-            // Limpa novos para não duplicar
-            grupoNovos.Clear();
 
             foreach (var peripheral in onlinePeripherals)
             {
-                // Verifica se já conhecemos este UUID
                 var dispositivoConhecido = grupoConhecidos.FirstOrDefault(d => string.Equals(d.Uuid, peripheral.Uuid, StringComparison.OrdinalIgnoreCase));
-
-                if (dispositivoConhecido != null)
-                {
-                    dispositivoConhecido.IsOnline = true; // Marca como online na lista de conhecidos
-                }
+                if (dispositivoConhecido != null) { dispositivoConhecido.IsOnline = true; }
                 else
                 {
-                    // Adiciona na lista de novos
-                    grupoNovos.Add(new ShowDevice
+                    if (!grupoNovos.Any(d => d.Uuid == peripheral.Uuid))
                     {
-                        Uuid = peripheral.Uuid,
-                        Equipamento = peripheral.Name ?? "Novo Dispositivo",
-                        IsOnline = true
-                    });
+                        grupoNovos.Add(new ShowDevice { Uuid = peripheral.Uuid, Equipamento = peripheral.Name ?? "Novo Disp.", IsOnline = true });
+                    }
                 }
             }
         }
@@ -141,32 +116,100 @@ namespace Lubrisense.ViewModels
         private void ResetDeviceStatus()
         {
             var grupoConhecidos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos conhecidos");
-            if (grupoConhecidos != null)
-            {
-                foreach (var device in grupoConhecidos)
-                {
-                    device.IsOnline = false;
-                }
-            }
-
+            if (grupoConhecidos != null) { foreach (var device in grupoConhecidos) device.IsOnline = false; }
             var grupoNovos = LstDevices.FirstOrDefault(g => g.Nome == "Dispositivos novos");
             grupoNovos?.Clear();
         }
 
-        // CLIQUE NA LISTA (A CORREÇÃO PRINCIPAL)
         [RelayCommand]
         public async Task DeviceTapped(ShowDevice selectedDevice)
         {
-            if (selectedDevice == null) return;
+            if (selectedDevice == null || IsBusyConnecting) return;
 
-            _bluetoothService.StopScan();
-            IsScanning = false;
+            if (!selectedDevice.IsOnline)
+            {
+                var savedCheck = SavedDeviceStorage.GetByUuid(selectedDevice.Uuid);
+                if (savedCheck == null)
+                {
+                    await Shell.Current.DisplayAlert("Indisponível", "Dispositivo novo fora de alcance. Faça um scan primeiro.", "OK");
+                    return;
+                }
+            }
 
-            // Lógica: Navega para a tela de Detalhes passando o UUID
-            // Lá na outra tela (DeviceDetailViewModel) ele vai carregar os dados e tentar conectar
-            await Shell.Current.GoToAsync($"{nameof(DeviceDetailView)}?DeviceUuid={selectedDevice.Uuid}");
+            try
+            {
+                IsBusyConnecting = true;
+                _bluetoothService.StopScan();
+                IsScanning = false;
 
-            SelectedDevice = null; // Limpa seleção visual
+                bool conectado = await _bluetoothService.ConnectToDeviceAsync(selectedDevice.Uuid);
+
+                if (!conectado)
+                {
+                    await Shell.Current.DisplayAlert("Erro", "Não foi possível conectar ao dispositivo.", "OK");
+                    return;
+                }
+
+                var comandoGet = "{\"comando\": \"get_config\"}";
+                string? jsonRecebido = await _bluetoothService.RequestDataAsync(comandoGet, 15000);
+
+                if (!string.IsNullOrEmpty(jsonRecebido))
+                {
+                    try
+                    {
+                        using JsonDocument doc = JsonDocument.Parse(jsonRecebido);
+                        JsonElement root = doc.RootElement;
+
+                        if (root.TryGetProperty("payload", out JsonElement payload)) root = payload;
+
+                        var deviceParaSalvar = SavedDeviceStorage.GetByUuid(selectedDevice.Uuid) ?? new SavedDevice(selectedDevice.Uuid);
+
+                        if (root.TryGetProperty("Tag", out JsonElement tag)) deviceParaSalvar.Tag = tag.GetString() ?? "";
+                        if (root.TryGetProperty("Equipamento", out JsonElement equip)) deviceParaSalvar.Equipamento = equip.GetString() ?? "";
+                        if (root.TryGetProperty("Setor", out JsonElement setor)) deviceParaSalvar.Setor = setor.GetString() ?? "";
+                        if (root.TryGetProperty("Lubrificante", out JsonElement lub)) deviceParaSalvar.Lubrificante = lub.GetString() ?? "";
+
+                        if (root.TryGetProperty("Volume", out JsonElement vol)) deviceParaSalvar.Volume = vol.GetInt32();
+                        if (root.TryGetProperty("Intervalo", out JsonElement inter)) deviceParaSalvar.Intervalo = inter.GetInt32();
+                        if (root.TryGetProperty("TipoIntervalo", out JsonElement tInter)) deviceParaSalvar.TipoIntervalo = tInter.GetInt32();
+                        if (root.TryGetProperty("Frequencia", out JsonElement freq)) deviceParaSalvar.Frequencia = freq.GetInt32();
+                        if (root.TryGetProperty("TipoFrequencia", out JsonElement tFreq)) deviceParaSalvar.TipoFrequencia = tFreq.GetInt32();
+                        if (root.TryGetProperty("TipoConfig", out JsonElement tConf)) deviceParaSalvar.TipoConfig = tConf.GetInt32();
+
+                        deviceParaSalvar.UltimaConexao = DateTime.Now;
+                        SavedDeviceStorage.AddOrUpdate(deviceParaSalvar);
+                        Console.WriteLine("[APP] Dados sincronizados.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[APP] Erro JSON: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    bool entrar = await Shell.Current.DisplayAlert("Sem Resposta", "Conectado, mas sem dados do dispositivo. Entrar com dados locais?", "Sim", "Não");
+                    if (!entrar) { _bluetoothService.Disconnect(); return; }
+                }
+
+                await Shell.Current.GoToAsync($"DeviceMenuView?DeviceUuid={selectedDevice.Uuid}");
+                SelectedDevice = null;
+            }
+            finally
+            {
+                IsBusyConnecting = false;
+            }
+        }
+
+        [RelayCommand]
+        public async Task DeviceDelete(ShowDevice device)
+        {
+            if (device == null) return;
+            var confirm = await Shell.Current.DisplayAlert("Remover", $"Esquecer {device.Equipamento}?", "Sim", "Não");
+            if (confirm)
+            {
+                SavedDeviceStorage.Remove(device.Uuid);
+                UpdateKnownDevices();
+            }
         }
     }
 }

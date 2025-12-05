@@ -1,13 +1,10 @@
 ﻿using ReactiveUI;
 using Shiny;
 using Shiny.BluetoothLE;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Lubrisense.Services
 {
@@ -31,7 +28,7 @@ namespace Lubrisense.Services
         public async Task<AccessState> RequestAccess() => await _bleManager.RequestAccess();
         public void Start() { }
 
-        // --- SCAN ---
+        // --- Scan ---
         public void StartScan()
         {
             _scanSubscription?.Dispose();
@@ -40,10 +37,8 @@ namespace Lubrisense.Services
             _scanSubscription = _bleManager
                 .Scan()
                 .Where(scanResult =>
-                    (scanResult.Peripheral.Name != null && scanResult.Peripheral.Name.Contains("Lubri", StringComparison.OrdinalIgnoreCase))
-                    ||
-                    (scanResult.AdvertisementData.ServiceUuids != null && scanResult.AdvertisementData.ServiceUuids.Contains(App.Instance.LubricenseServiceUuid))
-                )
+                    !string.IsNullOrEmpty(scanResult.Peripheral.Name) &&
+                    scanResult.Peripheral.Name.Contains("Lubri", StringComparison.OrdinalIgnoreCase))
                 .Buffer(TimeSpan.FromSeconds(1))
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(peripherals =>
@@ -63,159 +58,187 @@ namespace Lubrisense.Services
 
         public void StopScan() => _scanSubscription?.Dispose();
 
-        // --- CONEXÃO ---
+        // --- Conexão ---
         public async Task<bool> ConnectToDeviceAsync(string deviceUuid)
         {
-            // 1. Reutilização
-            if (_connectedDevice != null &&
-                _connectedDevice.Status == ConnectionState.Connected &&
-                _connectedDevice.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase) &&
-                _writeReadNotifyCharacteristic != null)
+            try
             {
+                Disconnect(); // Limpa conexão anterior
+                StopScan();
+
+                var deviceToConnect = DiscoveredDevices.FirstOrDefault(p => p.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase));
+
+                if (deviceToConnect == null)
+                {
+                    var known = _bleManager.GetKnownPeripheral(deviceUuid);
+                    if (known != null) deviceToConnect = known;
+                }
+
+                if (deviceToConnect == null)
+                {
+                    Debug.WriteLine($"[BluetoothService] Dispositivo {deviceUuid} não encontrado.");
+                    return false;
+                }
+
+                if (deviceToConnect.Status == ConnectionState.Connected)
+                    deviceToConnect.CancelConnection();
+
+                await deviceToConnect.ConnectAsync(timeout: TimeSpan.FromSeconds(10));
+                _connectedDevice = deviceToConnect;
+
+                _writeReadNotifyCharacteristic = await deviceToConnect.GetCharacteristic(
+                    App.Instance.LubricenseServiceUuid,
+                    App.Instance.LubricenseCharacteristicUuid
+                ).Take(1).ToTask();
+
+                if (_writeReadNotifyCharacteristic == null)
+                {
+                    Debug.WriteLine("[BluetoothService] Característica não encontrada.");
+                    Disconnect();
+                    return false;
+                }
+
+                SetupNotifications();
                 return true;
             }
-
-            StopScan();
-
-            for (int tentativa = 1; tentativa <= 3; tentativa++)
+            catch (Exception ex)
             {
-                try
-                {
-                    Console.WriteLine($"[BLE] Tentativa {tentativa}...");
-
-                    // 2. Limpeza
-                    if (_connectedDevice != null)
-                    {
-                        try
-                        {
-                            _notificationSubscription?.Dispose();
-                            _connectedDevice.CancelConnection();
-                        }
-                        catch { }
-                        _connectedDevice = null;
-                        _writeReadNotifyCharacteristic = null;
-                        await Task.Delay(500);
-                    }
-
-                    // 3. Busca
-                    var deviceToConnect = DiscoveredDevices.FirstOrDefault(p => p.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase));
-
-                    if (deviceToConnect == null)
-                    {
-                        var scanResult = await _bleManager.Scan()
-                            .Where(x => x.Peripheral.Uuid.Equals(deviceUuid, StringComparison.OrdinalIgnoreCase))
-                            .Take(1)
-                            .Timeout(TimeSpan.FromSeconds(5))
-                            .ToTask();
-                        deviceToConnect = scanResult?.Peripheral;
-                    }
-
-                    if (deviceToConnect == null) throw new Exception("Dispositivo não encontrado.");
-
-                    // 4. Conecta
-                    await deviceToConnect.ConnectAsync(new ConnectionConfig { AutoConnect = false });
-                    _connectedDevice = deviceToConnect;
-
-                    // 5. Busca Característica
-                    for (int i = 0; i < 3; i++)
-                    {
-                        try
-                        {
-                            if (i > 0) await Task.Delay(300);
-                            _writeReadNotifyCharacteristic = await deviceToConnect.GetCharacteristic(
-                                App.Instance.LubricenseServiceUuid,
-                                App.Instance.LubricenseCharacteristicUuid
-                            ).Take(1).ToTask();
-                            if (_writeReadNotifyCharacteristic != null) break;
-                        }
-                        catch { }
-                    }
-
-                    if (_writeReadNotifyCharacteristic == null) throw new Exception("Característica não encontrada.");
-
-                    SetupNotifications();
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[BLE] Erro tentativa {tentativa}: {ex.Message}");
-                    await Task.Delay(1000);
-                }
+                Debug.WriteLine($"[BluetoothService] Falha ao conectar: {ex.Message}");
+                Disconnect();
+                return false;
             }
-            return false;
         }
 
-        // --- CORREÇÃO CRÍTICA: FATIAMENTO DE DADOS (CHUNKING) ---
+        // ==================================================================
+        // MUDANÇA CRÍTICA AQUI: Envio Fatiado (Chunking)
+        // ==================================================================
         public async Task<bool> SendDataAsync(string message)
         {
-            if (_connectedDevice?.Status != ConnectionState.Connected || _writeReadNotifyCharacteristic == null) return false;
+            if (_connectedDevice?.IsConnected() != true || _writeReadNotifyCharacteristic == null) return false;
 
             try
             {
-                // Converte a string inteira em bytes
                 var bytes = Encoding.UTF8.GetBytes(message);
 
-                // Define o tamanho seguro do pacote (20 bytes é o padrão universal do BLE)
+                // O BLE padrão suporta ~20 bytes de payload útil por pacote.
+                // Enviar mais que isso sem negociação de MTU causa erro ou perda de dados.
                 int chunkSize = 20;
                 int offset = 0;
 
-                // Loop para enviar pedacinho por pedacinho
                 while (offset < bytes.Length)
                 {
+                    // Calcula o tamanho do pedaço atual
                     int size = Math.Min(chunkSize, bytes.Length - offset);
                     var chunk = new byte[size];
                     Array.Copy(bytes, offset, chunk, 0, size);
 
-                    // Envia o pedaço (Sem resposta para ser rápido)
-                    await _connectedDevice.WriteCharacteristicAsync(_writeReadNotifyCharacteristic, chunk, false);
+                    // Envia o pedaço
+                    await _connectedDevice.WriteCharacteristicAsync(_writeReadNotifyCharacteristic, chunk);
 
-                    // Pequeno delay para não engasgar o rádio do celular
-                    await Task.Delay(20);
-
+                    // Avança para o próximo
                     offset += size;
+
+                    // Pequeno delay para dar tempo do ESP32 processar e limpar o buffer do Android
+                    await Task.Delay(50);
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[BLE] Erro envio: {ex.Message}");
+                Debug.WriteLine($"[BluetoothService] Erro ao enviar dados: {ex.Message}");
                 return false;
+            }
+        }
+
+        // --- Recepção (Request/Response) ---
+        public async Task<string?> RequestDataAsync(string commandJson, int timeoutMs = 15000)
+        {
+            if (_connectedDevice?.IsConnected() != true) return null;
+
+            var tcs = new TaskCompletionSource<string?>();
+            var receivedBuffer = new StringBuilder();
+            int openBraces = 0;
+            bool foundStart = false;
+
+            Action<string> tempHandler = null;
+            tempHandler = (data) =>
+            {
+                Debug.WriteLine($"[BLE RAW] Recebido: {data}");
+                receivedBuffer.Append(data);
+                string currentStr = receivedBuffer.ToString();
+
+                openBraces = 0;
+                foundStart = false;
+                foreach (char c in currentStr)
+                {
+                    if (c == '{') { openBraces++; foundStart = true; }
+                    else if (c == '}') { openBraces--; }
+                }
+
+                if (foundStart && openBraces == 0)
+                {
+                    Debug.WriteLine("[BLE DEBUG] JSON Completo Detectado!");
+                    DataReceived -= tempHandler;
+                    tcs.TrySetResult(currentStr);
+                }
+            };
+
+            DataReceived += tempHandler;
+
+            try
+            {
+                Debug.WriteLine($"[BLE DEBUG] Enviando comando: {commandJson}");
+                bool sent = await SendDataAsync(commandJson); // Usa o método fatiado agora!
+                if (!sent)
+                {
+                    DataReceived -= tempHandler;
+                    return null;
+                }
+
+                var timeoutTask = Task.Delay(timeoutMs);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                if (completedTask == tcs.Task) return await tcs.Task;
+                else
+                {
+                    DataReceived -= tempHandler;
+                    Debug.WriteLine($"[BLE TIMEOUT] Buffer atual: {receivedBuffer}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                DataReceived -= tempHandler;
+                Debug.WriteLine($"[BLE ERROR] {ex.Message}");
+                return null;
             }
         }
 
         private void SetupNotifications()
         {
-            if (_connectedDevice == null || _writeReadNotifyCharacteristic == null) return;
-            try
-            {
-                _notificationSubscription?.Dispose();
-                if (_writeReadNotifyCharacteristic.CanNotify())
+            if (_connectedDevice == null || _writeReadNotifyCharacteristic == null || !_writeReadNotifyCharacteristic.CanNotify()) return;
+
+            _notificationSubscription?.Dispose();
+            _notificationSubscription = _connectedDevice
+                .NotifyCharacteristic(_writeReadNotifyCharacteristic)
+                .Subscribe(result =>
                 {
-                    _notificationSubscription = _connectedDevice
-                        .NotifyCharacteristic(_writeReadNotifyCharacteristic)
-                        .Subscribe(result => {
-                            if (result.Data != null)
-                            {
-                                var data = Encoding.UTF8.GetString(result.Data);
-                                DataReceived?.Invoke(data);
-                            }
-                        });
-                }
-            }
-            catch { }
+                    if (result.Data != null)
+                    {
+                        var data = Encoding.UTF8.GetString(result.Data);
+                        DataReceived?.Invoke(data);
+                    }
+                });
         }
 
         public void Disconnect()
         {
-            try
+            if (_connectedDevice != null)
             {
-                _notificationSubscription?.Dispose();
-                _connectedDevice?.CancelConnection();
+                try { _notificationSubscription?.Dispose(); _connectedDevice.CancelConnection(); } catch { }
+                _connectedDevice = null;
             }
-            catch { }
-            _connectedDevice = null;
-            _writeReadNotifyCharacteristic = null;
         }
     }
 }

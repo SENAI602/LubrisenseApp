@@ -1,5 +1,4 @@
-﻿using Lubrisense.Resources.Fonts;
-using Lubrisense.ViewModels;
+﻿using Lubrisense.ViewModels;
 
 namespace Lubrisense.Views;
 
@@ -18,47 +17,10 @@ public partial class DeviceView : ContentPage
     {
         base.OnAppearing();
 
-        // Garante que os eventos e a lista sejam atualizados
+        // Avisa a ViewModel que a tela apareceu.
+        // A ViewModel vai limpar a lista e iniciar o Scan automaticamente.
         viewModel.OnAppearing();
-        viewModel.PropertyChanged += OnViewModelPropertyChanged;
-
-        UpdateToolbarIcon();
     }
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-    }
-
-    private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(DeviceViewModel.IsScanning))
-        {
-            UpdateToolbarIcon();
-        }
-    }
-
-    private void UpdateToolbarIcon()
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            if (viewModel.IsScanning)
-            {
-                BluetoothToolbar.IconImageSource = new FontImageSource
-                {
-                    Glyph = FluentUI.bluetooth_searching_24_regular,
-                    FontFamily = "FluentRegular"
-                };
-            }
-            else
-            {
-                BluetoothToolbar.IconImageSource = new FontImageSource
-                {
-                    Glyph = FluentUI.bluetooth_24_regular,
-                    FontFamily = "FluentRegular"
-                };
-            }
-        });
-    }
+    // Removemos toda a lógica de "UpdateToolbarIcon" porque o botão não existe mais visualmente.
 }

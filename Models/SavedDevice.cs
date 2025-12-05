@@ -18,7 +18,7 @@ namespace Lubrisense.Models
         public int Volume { get; set; }         // Gramas
         public int Intervalo { get; set; }      // Valor do intervalo
 
-        // --- NOVOS CAMPOS PARA O FIRMWARE HÍBRIDO (PEDIDO DO LEONARDO) ---
+        // --- NOVOS CAMPOS PARA O FIRMWARE HÍBRIDO ---
         public int Frequencia { get; set; } = 1;     // Ex: 1 vez
         public int TipoFrequencia { get; set; } = 2; // Ex: por Dia (2)
 

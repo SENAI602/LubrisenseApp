@@ -7,19 +7,8 @@
              x:Class="Lubrisense.Views.DeviceView"
              x:DataType="viewModels:DeviceViewModel"
              Title="Dispositivos">
-    <ContentPage.ToolbarItems>
-        <ToolbarItem x:Name="BluetoothToolbar"
-                     Order="Primary"
-                     Priority="0"
-                     Command="{Binding ToggleScanCommand}">
-            <ToolbarItem.IconImageSource>
-                <FontImageSource
-                    FontFamily="FluentRegular"
-                    Glyph="{x:Static fonts:FluentUI.bluetooth_24_regular}"/>
-            </ToolbarItem.IconImageSource>
-        </ToolbarItem>
-        <ToolbarItem Order="Secondary" Text="Sobre"/>
-    </ContentPage.ToolbarItems>
+
+    <!-- ToolbarItems (Botão Bluetooth) REMOVIDO -->
 
     <Grid RowDefinitions="*" VerticalOptions="Fill" Padding="10">
         <CollectionView x:Name="DevicesList" 
@@ -36,7 +25,7 @@
                            FontSize="16"
                            TextColor="{StaticResource FremtecBlue}"
                            FontAttributes="Bold"/>
-                        </DataTemplate>
+                </DataTemplate>
             </CollectionView.GroupHeaderTemplate>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:ShowDevice">
@@ -53,14 +42,14 @@
                                FontSize="26">
                             <Label.Triggers>
                                 <DataTrigger TargetType="Label"
-                                     Binding="{Binding IsOnline}"
-                                     Value="True">
+                                    Binding="{Binding IsOnline}"
+                                    Value="True">
                                     <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_1_24_regular}" />
                                     <Setter Property="TextColor" Value="Green" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Label"
-                                     Binding="{Binding IsOnline}"
-                                     Value="False">
+                                    Binding="{Binding IsOnline}"
+                                    Value="False">
                                     <Setter Property="Text" Value="{x:Static fonts:FluentUI.wifi_off_24_regular}" />
                                     <Setter Property="TextColor" Value="Red" />
                                 </DataTrigger>
@@ -69,7 +58,7 @@
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
-            <CollectionView.GroupFooterTemplate> 
+            <CollectionView.GroupFooterTemplate>
                 <DataTemplate x:DataType="models:DeviceGroup">
                     <Label Text="{Binding Count, StringFormat='Total de dispositivos: {0:D}'}"
                            TextColor="{StaticResource FremtecGrayDark}"/>

@@ -7,8 +7,8 @@ namespace Lubrisense
         public AppShell()
         {
             InitializeComponent();
-            Routing.RegisterRoute(nameof(DeviceDetailView), typeof(DeviceDetailView));
             Routing.RegisterRoute(nameof(DeviceConfigView), typeof(DeviceConfigView));
+            Routing.RegisterRoute(nameof(DeviceMenuView), typeof(DeviceMenuView));
         }
     }
 }

@@ -31,11 +31,11 @@ namespace Lubrisense
             builder.Services.AddSingleton<BluetoothService>();
 
             builder.Services.AddSingleton<DeviceViewModel>();
-            builder.Services.AddTransient<DeviceDetailViewModel>();
+            builder.Services.AddTransient<DeviceMenuViewModel>();
             builder.Services.AddTransient<DeviceConfigViewModel>();
 
             builder.Services.AddSingleton<DeviceView>();
-            builder.Services.AddTransient<DeviceDetailView>();
+            builder.Services.AddTransient<DeviceMenuView>();
             builder.Services.AddTransient<DeviceConfigView>();
 
 #if DEBUG
