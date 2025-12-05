@@ -33,10 +33,12 @@ namespace Lubrisense
             builder.Services.AddSingleton<DeviceViewModel>();
             builder.Services.AddTransient<DeviceMenuViewModel>();
             builder.Services.AddTransient<DeviceConfigViewModel>();
+            builder.Services.AddTransient<DeviceHistoryView>();
 
             builder.Services.AddSingleton<DeviceView>();
             builder.Services.AddTransient<DeviceMenuView>();
             builder.Services.AddTransient<DeviceConfigView>();
+            builder.Services.AddTransient<DeviceHistoryViewModel>();
 
 #if DEBUG
             builder.Logging.AddDebug();

@@ -9,6 +9,7 @@ namespace Lubrisense
             InitializeComponent();
             Routing.RegisterRoute(nameof(DeviceConfigView), typeof(DeviceConfigView));
             Routing.RegisterRoute(nameof(DeviceMenuView), typeof(DeviceMenuView));
+            Routing.RegisterRoute(nameof(DeviceHistoryView), typeof(DeviceHistoryView));
         }
     }
 }

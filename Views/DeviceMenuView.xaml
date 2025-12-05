@@ -25,22 +25,22 @@
 
                         <!-- Nome Principal -->
                         <Label Text="{Binding DeviceTitle}" 
-                               FontSize="24" 
+                               FontSize="20" 
                                FontAttributes="Bold" 
                                TextColor="#101828"
                                LineBreakMode="TailTruncation"/>
 
                         <!-- Detalhes -->
                         <Label Text="{Binding DeviceSubTitle}" 
-                               FontSize="18" 
+                               FontSize="16" 
                                TextColor="#667085"/>
 
                         <Label Text="{Binding DeviceSetor}" 
-                               FontSize="18" 
+                               FontSize="16" 
                                TextColor="#667085"/>
 
                         <Label Text="{Binding DeviceLubricant}" 
-                               FontSize="18" 
+                               FontSize="16" 
                                TextColor="#667085"/>
                     </VerticalStackLayout>
 
@@ -53,7 +53,7 @@
                                TextColor="#333333" 
                                HorizontalTextAlignment="Center"/>
                         <Label Text="Bateria" 
-                               FontSize="14" 
+                               FontSize="16" 
                                TextColor="#999999" 
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
@@ -67,7 +67,7 @@
                                TextColor="#333333" 
                                HorizontalTextAlignment="Center"/>
                         <Label Text="Temp." 
-                               FontSize="14" 
+                               FontSize="16" 
                                TextColor="#999999" 
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>

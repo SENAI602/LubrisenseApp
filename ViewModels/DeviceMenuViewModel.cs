@@ -54,7 +54,8 @@ namespace Lubrisense.ViewModels
         [RelayCommand]
         private async Task GoToHistory()
         {
-            await Shell.Current.DisplayAlert("Em Breve", "A tela de histórico será implementada na próxima etapa.", "OK");
+            // Navega para a nova tela passando o ID
+            await Shell.Current.GoToAsync($"DeviceHistoryView?DeviceUuid={DeviceUuid}");
         }
 
         [RelayCommand]

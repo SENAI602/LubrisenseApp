@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Lubrisense.ViewModels"
+             xmlns:models="clr-namespace:Lubrisense.Models"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="Lubrisense.Views.DeviceHistoryView"
+             Title="Histórico de Dosagem"
+             BackgroundColor="#F2F4F7"
+             x:DataType="viewModels:DeviceHistoryViewModel">
+
+    <!-- Adicionei os Recursos aqui para o Converter funcionar -->
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *">
+
+        <!-- Loading -->
+        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" 
+                           Color="#2196F3" HeightRequest="40" Margin="0,20,0,0"/>
+
+        <!-- Lista Vazia -->
+        <VerticalStackLayout Grid.Row="1" VerticalOptions="Center" HorizontalOptions="Center" 
+                             IsVisible="{Binding TemDados, Converter={StaticResource InvertedBoolConverter}}">
+            <Label Text="📭" FontSize="40" HorizontalOptions="Center"/>
+            <Label Text="Nenhum registro encontrado" TextColor="Gray" HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Lista de Logs -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding HistoricoList}" 
+                        SelectionMode="None" Margin="10"
+                        IsVisible="{Binding TemDados}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:LogEvent">
+                    <Grid Padding="0,5">
+                        <Frame Padding="15" CornerRadius="10" HasShadow="True" BorderColor="Transparent" BackgroundColor="White">
+                            <Grid ColumnDefinitions="Auto, *, Auto" RowDefinitions="Auto, Auto" ColumnSpacing="15">
+
+                                <!-- Ícone de Sucesso/Erro -->
+                                <Label Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                                       Text="{Binding IconeSucesso}" 
+                                       FontSize="24" 
+                                       VerticalOptions="Center"/>
+
+                                <!-- Dados Principais -->
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                    <Label Text="{Binding HoraFormatada}" FontSize="14" FontAttributes="Bold" TextColor="#333333"/>
+                                    <Label Text="{Binding IconeModo}" FontSize="12" TextColor="#666666"/>
+                                </VerticalStackLayout>
+
+                                <!-- Dados Secundários (Sensores) -->
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="10" Margin="0,5,0,0">
+                                    <Label Text="{Binding TextoBateria}" FontSize="11" TextColor="#555555"/>
+                                    <Label Text="{Binding TextoTemperatura}" FontSize="11" TextColor="#555555"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Status Gateway -->
+                                <Border Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
+                                        Stroke="{Binding GatewayCor}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 5"
+                                        Padding="6,2"
+                                        VerticalOptions="Center" HorizontalOptions="End">
+                                    <Label Text="{Binding IconeGateway}" 
+                                           TextColor="{Binding GatewayCor}" 
+                                           FontSize="10" 
+                                           FontAttributes="Bold"/>
+                                </Border>
+
+                            </Grid>
+                        </Frame>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -71,12 +71,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Views\DeviceHistoryView.xaml.cs">
+	    <DependentUpon>DeviceHistoryView.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Views\DeviceMenuView.xaml.cs">
 	    <DependentUpon>DeviceMenuView.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Views\DeviceHistoryView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\DeviceConfigView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
